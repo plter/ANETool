@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Window xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.core.IWindow;
+			
+			override protected function setupWindowInitOptions():NativeWindowInitOptions{
+				var init:NativeWindowInitOptions = new NativeWindowInitOptions();
+				init.maximizable = maximizable;
+				init.minimizable = minimizable;
+				init.resizable = resizable;
+				init.type = type;
+				init.systemChrome = systemChrome;
+				init.transparent = transparent;
+				init.renderMode = renderMode;
+				init.owner = parentWindow.nativeWindow;
+				return init;
+			}
+
+			public function get parentWindow():IWindow
+			{
+				return _parentWindow;
+			}
+
+			public function set parentWindow(value:IWindow):void
+			{
+				_parentWindow = value;
+			}
+			
+			private var _parentWindow:IWindow=null;
+			
+		]]>
+	</fx:Script>
+	
+</s:Window>

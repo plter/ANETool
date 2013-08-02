@@ -1,0 +1,1379 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
+					   xmlns:mx="library://ns.adobe.com/flex/mx"
+					   xmlns:ui="com.plter.anetool.ui.*"
+					   title="ANE打包工具" width="1024" height="690" showStatusBar="false" fontSize="14" 
+					   creationComplete="windowedapplication1_creationCompleteHandler(event)"
+					   invoke="windowedapplication1_invokeHandler(event)"
+					   nativeDragEnter="windowedapplication1_nativeDragEnterHandler(event)"
+					   nativeDragDrop="windowedapplication1_nativeDragDropHandler(event)"
+					   mouseDown="windowedapplication1_mouseDownHandler(event)">
+	
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		
+		mx|ToolTip{
+			fontSize:14;
+		}
+		
+		s|WindowedApplication{
+			fontFamily:宋体;
+		}
+		
+		.mustInputText{
+			color:#FF0000;
+		}
+		
+		.enText{
+			fontSize:12;
+		}
+	</fx:Style>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.plter.anetool.Config;
+			import com.plter.anetool.FileFilters;
+			import com.plter.anetool.Log;
+			import com.plter.anetool.TextTool;
+			import com.plter.anetool.data.SimpleFilePromise;
+			import com.plter.anetool.ui.ANEToolMenu;
+			import com.plter.anetool.ui.DialogEditPlatformAttach;
+			import com.plter.anetool.ui.DonateWindow;
+			import com.plter.anetool.vo.PkgAneConfigData;
+			import com.plter.anetool.vo.PkgAneProgressMessage;
+			import com.plter.anetool.vo.VOManager;
+			
+			import flash.net.URLRequest;
+			import flash.net.navigateToURL;
+			
+			import mx.events.FlexEvent;
+			
+			private static var _aneTool:AneTool=null;
+			private var _fileSwc:File=null;
+			private var _fileJava:File=null;
+			private var _dirFlexOrAirSDK:File=null;
+			private var _fileAndroidNativeLib:File=null;
+			private var _fileiOSNativeLib:File=null;
+			private var _fileWindowsNativeLib:File=null;
+			private var _fileMacNativeLib:File=null;
+			private var _fileCert:File=null;
+			private var _fileAdt:File=null;
+			private var _dirAndroidAttach:File=null;
+			private var _diriOSAttach:File=null;
+			private var _fileAneExport:File=null;
+			private var _filePlatformOptions:File=null;
+			private var _fileCurrentConfig:File=null;
+			
+			public static function get aneTool():AneTool
+			{
+				return _aneTool;
+			}
+			
+			protected function btnGoPlter_clickHandler(event:MouseEvent):void
+			{
+				navigateToURL(new URLRequest("http://plter.com"));				
+			}
+			
+			protected function windowedapplication1_creationCompleteHandler(event:FlexEvent):void
+			{
+				_aneTool = this;
+				
+				VOManager.regVO();
+				Log.outTextArea=taOutput;
+				if (NativeApplication.supportsMenu) 
+				{
+					NativeApplication.nativeApplication.menu = ANEToolMenu.aneToolMainMenu;
+				}else if (NativeWindow.supportsMenu) 
+				{
+					nativeWindow.menu = ANEToolMenu.aneToolMainMenu;
+				}
+			}
+			
+			private var _pkgAneWorker:Worker=null;
+			private var _pkgAneWorkerProgressMC:MessageChannel=null;
+			
+			protected function btnGenAne_clickHandler(event:MouseEvent):void
+			{
+				if (checkConfig()) 
+				{
+					btnGenAne.enabled=false;
+					
+					_pkgAneWorker  = WorkerDomain.current.createWorker(Workers.com_plter_anetool_workers_pkganework_PkgAneWorker,true);
+					
+					_pkgAneWorkerProgressMC = _pkgAneWorker.createMessageChannel(Worker.current);
+					_pkgAneWorkerProgressMC.addEventListener(Event.CHANNEL_MESSAGE,pkgAneWorkerProgressMC_messageHandler);
+					_pkgAneWorker.setSharedProperty("progressMC",_pkgAneWorkerProgressMC);
+					_pkgAneWorker.setSharedProperty("pkgAneConfigData",getPkgAneConfigData());
+					
+					_pkgAneWorker.addEventListener(Event.WORKER_STATE,pkgAneWorker_workerStateHandler);
+					_pkgAneWorker.start();
+				}
+			}
+			
+			
+			protected function pkgAneWorker_workerStateHandler(event:Event):void
+			{
+				if(_pkgAneWorker.state=="terminated"){
+					btnGenAne.enabled=true;
+				}
+			}
+			
+			protected function pkgAneWorkerProgressMC_messageHandler(event:Event):void
+			{
+				var msg:PkgAneProgressMessage = _pkgAneWorkerProgressMC.receive();
+				if (msg) 
+				{
+					switch(msg.type)
+					{
+						case "info":
+							Log.info(msg.message);
+							break;
+						case "error":
+							Log.error(msg.message);
+							break;
+						case "warn":
+							Log.warn(msg.message);
+							break;
+					}
+				}
+			}
+			
+			public function setPropertiesByConfigData(configData:PkgAneConfigData):void
+			{
+				_tiSwcPathText=configData.swcFilePath;
+				_tiJavaPathText=configData.javaFilePath;
+				_tiFlexOrAirSdkText = configData.flexOrAirSdkFilePath;
+				_tiAneIdText=configData.aneId;
+				_tiAneVersionText=configData.aneVersion;
+				_tiAneAIRVersionText=configData.aneAirVersion;
+				_tiAneNameText=configData.aneName;
+				_tiAneDescText=configData.aneDesc;
+				_tiAneCopyrightText=configData.aneCopyright;
+				
+				_cbSelectAndroidSelected=configData.selectAndroidPlatform;
+				_tiAndroidExtNativeLibText=configData.androidExtNativeLibFilePath;
+				_tiAndroidExtInitializerText=configData.androidExtInitializer;
+				_tiAndroidExtFinalizerText=configData.androidExtFinalizer;
+				_cbAndroidExtSelectAttachmentsSelected = configData.androidExtSelectAttachments;
+				_tiAndroidExtAttachmentsText=configData.androidExtAttachments;
+				_cbAndroidExtSelectDependsSelected = configData.androidExtSelectDepends;
+				_tiAndroidExtDependsText = configData.androidExtDepends;
+				
+				_cbSelectiOSSelected=configData.selectiOSPlatform;
+				_rbiOSRealDeviceSelected = configData.iOSExtUseRealDevice;
+				_tiiOSExtNativeLibText=configData.iOSExtNativeLibFilePath;
+				_tiiOSExtInitializerText=configData.iOSExtInitializer;
+				_tiiOSExtFinalizerText=configData.iOSExtFinalizer;
+				_cbiOSExtSelectAttachmentsSelected=configData.iOSExtSelectAttachments;
+				_tiiOSExtAttachmentsText=configData.iOSExtAttachments;
+				_cbiOSExtSelectPlatformOptionsSelected=configData.iOSExtSelectPlatformOptionsFile;
+				
+				_cbSelectWindowsSelected=configData.selectWindowsPlatform;
+				_tiWindowsExtNativeLibText=configData.windowsExtNativeLibFilePath;
+				_tiWindowsExtInitializerText=configData.windowsExtInitializer;
+				_tiWindowsExtFinalizerText=configData.windowsExtFinalizer;
+				_cbWindowsExtSelectAttachmentsSelected = configData.windowsExtSelectAttachments;
+				_tiWindowsExtAttachmentsText=configData.windowsExtAttachments;
+				
+				_cbSelectMacSelected=configData.selectMacPlatform;
+				_tiMacExtNativeLibText=configData.macExtNativeLibFilePath;
+				_tiMacExtInitializerText=configData.macExtInitializer;
+				_tiMacExtFinalizerText=configData.macExtFinalizer;
+				_cbMacExtSelectAttachmentsSelected = configData.macExtSelectAttachments;
+				_tiMacExtAttachmentsText=configData.macExtAttachments;
+				
+				_tiCertPathText = configData.certFilePath;
+				_tiCertPasswordText = configData.certPassword;
+				_cbUseTimestapSelected = configData.useTimeStap;
+				_tiAneExportPathText = configData.aneExportPath;
+			}
+			
+			
+			public function getPkgAneConfigData():PkgAneConfigData{
+				var data:PkgAneConfigData = new PkgAneConfigData;
+				data.swcFilePath = fileSwc.nativePath;
+				data.javaFilePath = fileJava.nativePath;
+				data.flexOrAirSdkFilePath = tiFlexOrAirSdk.text;
+				data.adtFilePath = fileAdt.nativePath;
+				
+				data.aneDescFileContent = getAneDescFileContent().toXMLString();
+				data.aneId = tiAneId.text;
+				data.aneVersion = tiAneVersion.text;
+				data.aneAirVersion = tiAneAIRVersion.text;
+				data.aneName = tiAneName.text;
+				data.aneDesc = tiAneDesc.text;
+				data.aneCopyright = tiAneCopyright.text;
+				
+				data.selectAndroidPlatform = cbSelectAndroid?cbSelectAndroid.selected:false;
+				if (data.selectAndroidPlatform)
+				{
+					data.androidExtNativeLibFilePath = fileAndroidNativeLib.nativePath;
+					data.androidExtInitializer = tiAndroidExtInitializer.text;
+					data.androidExtFinalizer = tiAndroidExtFinalizer.text;
+					data.androidExtSelectAttachments = cbAndroidExtSelectAttachments.selected;
+					data.androidExtAttachments = tiAndroidExtAttachments.text;
+					data.androidExtSelectDepends = cbAndroidExtSelectDepends.selected;
+					data.androidExtDepends = tiAndroidExtDepends.text;
+				}
+				
+				data.selectiOSPlatform = cbSelectiOS?cbSelectiOS.selected:false;
+				if (data.selectiOSPlatform) 
+				{
+					data.iOSExtNativeLibFilePath = fileiOSNativeLib.nativePath;
+					data.iOSExtUseRealDevice = rbiOSRealDevice.selected;
+					data.iOSExtInitializer = tiiOSExtInitializer.text;
+					data.iOSExtFinalizer = tiiOSExtFinalizer.text;
+					data.iOSExtSelectAttachments = cbiOSExtSelectAttachments.selected;
+					data.iOSExtAttachments = tiiOSExtAttachments.text;
+					data.iOSExtSelectPlatformOptionsFile = cbiOSExtSelectPlatformOptions.selected;
+					data.iOSExtPlatformOptionsFilePath  =tiiOSExtPlatformOptions.text;
+				}
+				
+				data.selectWindowsPlatform = cbSelectWindows?cbSelectWindows.selected:false;
+				if (data.selectWindowsPlatform) 
+				{
+					data.windowsExtNativeLibFilePath = fileWindowsNativeLib.nativePath;
+					data.windowsExtInitializer = tiWindowsExtInitializer.text;
+					data.windowsExtFinalizer = tiWindowsExtFinalizer.text;
+					data.windowsExtSelectAttachments = cbWindowsExtSelectAttachments.selected;
+					data.windowsExtAttachments = tiWindowsExtAttachments.text;
+				}
+				
+				data.selectMacPlatform = cbSelectMac?cbSelectMac.selected:false;
+				if (data.selectMacPlatform) 
+				{
+					data.macExtNativeLibFilePath = fileMacNativeLib.nativePath;
+					data.macExtInitializer = tiMacExtInitializer.text;
+					data.macExtFinalizer = tiMacExtFinalizer.text;
+					data.macExtSelectAttachments = cbMacExtSelectAttachments.selected;
+					data.macExtAttachments = tiMacExtAttachments.text;
+				}
+				
+				
+				data.certFilePath = tiCertPath.text;
+				data.certPassword = tiCertPassword.text;
+				data.useTimeStap = cbUseTimestap.selected;
+				data.aneExportPath = fileAneExport.nativePath;
+				return data;
+			}
+			
+			
+			private function checkConfig():Boolean{
+				if (TextTool.isTextEmpty(tiSwcPath)) 
+				{
+					Log.error("SWC路径未指定");
+					return false;
+				}
+				try{
+					_fileSwc = new File(tiSwcPath.text.replace(/\\/g,"/"));
+					if (!_fileSwc.exists) 
+					{
+						Log.error("所指定的SWC文件不存在");
+						return false;
+					}
+				}catch(e:Error){
+					Log.error("所指定的SWC文件不存在");
+					return false;
+				}
+				
+				if (TextTool.isTextEmpty(tiJavaPath)) 
+				{
+					Log.error("Java命令文件未指定");
+					return false;
+				}
+				try{
+					_fileJava = new File(tiJavaPath.text.replace(/\\/g,"/"));
+					if (!_fileJava.exists) 
+					{
+						Log.error("所指定的Java命令文件不存在");
+						return false;
+					}
+				}catch(e:Error){
+					Log.error("所指定的Java命令文件不存在");
+					return false;
+				}
+				
+				if (TextTool.isTextEmpty(tiFlexOrAirSdk)) 
+				{
+					Log.error("Flex/AIR SDK 未指定");
+					return false;
+				}
+				try{
+					_dirFlexOrAirSDK = new File(tiFlexOrAirSdk.text.replace(/\\/g,"/"));
+					if (!_dirFlexOrAirSDK.exists) 
+					{
+						Log.error("所指定的Flex/AIR SDK不存在");
+						return false;
+					}
+				}catch(e:Error){
+					Log.error("所指定的Flex/AIR SDK不存在");
+					return false;
+				}
+				try{
+					_fileAdt = _dirFlexOrAirSDK.resolvePath("lib/adt.jar");
+					if (!_fileAdt.exists) 
+					{
+						Log.error("所指定的Flex/AIR SDK已经损坏");
+						return false;
+					}
+				}catch(e:Error){
+					Log.error("所指定的Flex/AIR SDK已经损坏");
+					return false;
+				}
+				if (TextTool.isTextEmpty(tiAneId)) 
+				{
+					Log.error("未指定本机扩展的ID");
+					return false;
+				}
+				if (TextTool.isTextEmpty(tiAneVersion)) 
+				{
+					Log.error("未指定本机扩展的版本");
+					return false;
+				}
+				if (cbSelectAndroid&&cbSelectAndroid.selected) 
+				{
+					if (TextTool.isTextEmpty(tiAndroidExtNativeLib)) 
+					{
+						Log.error("您选择的Android平台没有指定本机库");
+						return false;
+					}
+					try{
+						_fileAndroidNativeLib = new File(tiAndroidExtNativeLib.text.replace(/\\/g,"/"));
+						if (!_fileAndroidNativeLib.exists) 
+						{
+							Log.error("所选择的Android本机库不存在");
+							return false;
+						}
+					}catch(e:Error){
+						Log.error("所选择的Android本机库不存在");
+						return false;
+					}
+					if (TextTool.isTextEmpty(tiAndroidExtInitializer)) 
+					{
+						Log.error("您选择的Android平台未指定Initializer");
+						return false;
+					}
+					if (cbAndroidExtSelectAttachments.selected) 
+					{
+						if (TextTool.isTextEmpty(tiAndroidExtAttachments)) 
+						{
+							Log.error("你选择了Android附件，但未指定该值");
+							return false;
+						}
+					}
+					if (cbAndroidExtSelectDepends.selected) 
+					{
+						if (TextTool.isTextEmpty(tiAndroidExtDepends)) 
+						{
+							Log.error("你选择了Android依赖项，但未指定该值");
+							return false;
+						}
+					}
+				}
+				if (cbSelectiOS&&cbSelectiOS.selected)
+				{
+					if (TextTool.isTextEmpty(tiiOSExtNativeLib)) 
+					{
+						Log.error("您选择的iOS平台没有指定本机库");
+						return false;
+					}
+					try{
+						_fileiOSNativeLib = new File(tiiOSExtNativeLib.text.replace(/\\/g,"/"));
+						if (!_fileiOSNativeLib.exists) 
+						{
+							Log.error("所选择的iOS本机库不存在");
+							return false;
+						}
+					}catch(e:Error){
+						Log.error("所选择的iOS本机库不存在");
+						return false;
+					}
+					if (TextTool.isTextEmpty(tiiOSExtInitializer)) 
+					{
+						Log.error("您选择的iOS平台未指定Initializer");
+						return false;
+					}
+					if (cbiOSExtSelectAttachments.selected) 
+					{
+						if (TextTool.isTextEmpty(tiiOSExtAttachments)) 
+						{
+							Log.error("您选择了iOS附件，但未指定该值");
+							return false;
+						}
+					}
+					if (cbiOSExtSelectPlatformOptions.selected) 
+					{
+						if (TextTool.isTextEmpty(tiiOSExtPlatformOptions)) 
+						{
+							Log.error("您选择了iOS平台选项，但未指定该文件");
+							return false;
+						}
+						try{
+							_filePlatformOptions = new File(tiiOSExtPlatformOptions.text.replace(/\\/g,"/"));
+							if (!_filePlatformOptions.exists) 
+							{
+								Log.error("您选择的iOS平台选项描述文件不存在");
+								return false;
+							}
+						}catch(e:Error){
+							Log.error("您选择的iOS平台选项描述文件不存在");
+							return false;
+						}
+					}
+				}
+				if (cbSelectWindows&&cbSelectWindows.selected) 
+				{
+					if (TextTool.isTextEmpty(tiWindowsExtNativeLib)) 
+					{
+						Log.error("您选择的Windows平台没有指定本机库");
+						return false;
+					}
+					try{
+						_fileWindowsNativeLib = new File(tiWindowsExtNativeLib.text.replace(/\\/g,"/"));
+						if (!_fileWindowsNativeLib.exists) 
+						{
+							Log.error("所选择的Windows本机库不存在");
+							return false;
+						}
+					}catch(e:Error){
+						Log.error("所选择的Windows本机库不存在");
+						return false;
+					}
+					if (TextTool.isTextEmpty(tiWindowsExtInitializer)) 
+					{
+						Log.error("您选择的Windows平台未指定Initializer");
+						return false;
+					}
+					if (cbWindowsExtSelectAttachments.selected) 
+					{
+						if (TextTool.isTextEmpty(tiWindowsExtAttachments)) 
+						{
+							Log.error("您选择了Windows附件，但未指定该值");
+							return false;
+						}
+					}
+				}
+				if (cbSelectMac&&cbSelectMac.selected) 
+				{
+					if (TextTool.isTextEmpty(tiMacExtNativeLib)) 
+					{
+						Log.error("您选择的Mac平台没有指定本机库");
+						return false;
+					}
+					try{
+						_fileMacNativeLib = new File(tiMacExtNativeLib.text.replace(/\\/g,"/"));
+						if (!_fileMacNativeLib.exists) 
+						{
+							Log.error("所选择的Mac本机库不存在");
+							return false;
+						}
+					}catch(e:Error){
+						Log.error("所选择的Mac本机库不存在");
+						return false;
+					}
+					if (TextTool.isTextEmpty(tiMacExtInitializer)) 
+					{
+						Log.error("您选择的Mac平台未指定Initializer");
+						return false;
+					}
+					if (cbMacExtSelectAttachments.selected) 
+					{
+						if (TextTool.isTextEmpty(tiMacExtAttachments)) 
+						{
+							Log.error("您选择了Mac附件，但是未指定该值");
+							return false;
+						}
+					}
+				}
+				if (!cbSelectAndroid.selected&&!cbSelectiOS.selected&&!cbSelectMac.selected&&!cbSelectWindows.selected) 
+				{
+					Log.error("平台选项 必须至少选择一个");
+					return false;
+				}
+				if (TextTool.isTextEmpty(tiCertPath)) 
+				{
+					Log.error("证书未指定");
+					return false;
+				}
+				try{
+					_fileCert = new File(tiCertPath.text.replace(/\\/g,"/"));
+					if (!_fileCert.exists) 
+					{
+						Log.error("所选的签名证书不存在");
+						return false;
+					}
+				}catch(e:Error){
+					Log.error("所选的签名证书不存在");
+					return false;
+				}
+				if (TextTool.isTextEmpty(tiCertPassword)) 
+				{
+					Log.error("证书密码未指定");
+					return false;
+				}
+				if (TextTool.isTextEmpty(tiAneExportPath)) 
+				{
+					Log.error("ANE导出路径未指定");
+					return false;
+				}
+				try{
+					_fileAneExport = new File(tiAneExportPath.text.replace(/\\/g,"/"));
+				}catch(e:Error){
+					Log.error("ANE导出路径不合法，请使用绝对路径");
+					return false;
+				}
+				return true;
+			}
+			
+			protected function btnBrowseForSwcPath_clickHandler(event:MouseEvent):void
+			{
+				var file:File = new File;
+				file.addEventListener(Event.SELECT,function(e:Event):void{
+					tiSwcPath.text = file.nativePath;
+				});
+				file.browseForOpen("选择一个SWC文件",FileFilters.SWC_FILE_FILTERS);
+			}
+			
+			protected function btnBrowseForJavaPath_clickHandler(event:MouseEvent):void
+			{
+				var file:File = new File;
+				file.addEventListener(Event.SELECT,function(e:Event):void{
+					tiJavaPath.text = file.nativePath;
+				});
+				file.browseForOpen("选择java命令");
+			}
+			
+			protected function btnBrowseForFlexOrAirSdk_clickHandler(event:MouseEvent):void
+			{
+				var file:File = new File;
+				file.addEventListener(Event.SELECT,function(e:Event):void{
+					tiFlexOrAirSdk.text = file.nativePath;
+				});
+				file.browseForDirectory("选择 Flex SDK 或者 AIR SDK");
+			}
+			
+			protected function btnBrowseForAndroidExtNativeLibPath_clickHandler(event:MouseEvent):void
+			{
+				var file:File = new File;
+				file.addEventListener(Event.SELECT,function(e:Event):void{
+					tiAndroidExtNativeLib.text = file.nativePath;
+				});
+				file.browseForOpen("选择一个Android库文件",FileFilters.ANDROID_LIB_FILE_FILTERS);
+			}
+			
+			protected function btnBrowseForiOSExtNativeLibPath_clickHandler(event:MouseEvent):void
+			{
+				var file:File = new File;
+				file.addEventListener(Event.SELECT,function(e:Event):void{
+					tiiOSExtNativeLib.text = file.nativePath;
+				});
+				file.browseForOpen("选择一个iOS库文件",FileFilters.A_FILE_FILTERS);
+			}
+			
+			protected function btnBrowseForWindowsExtNativeLibPath_clickHandler(event:MouseEvent):void
+			{
+				var file:File = new File;
+				file.addEventListener(Event.SELECT,function(e:Event):void{
+					tiWindowsExtNativeLib.text = file.nativePath;
+				});
+				file.browseForOpen("选择一个DLL库文件",FileFilters.DLL_FILE_FILTERS);
+			}
+			
+			protected function btnBrowseForMacExtNativeLibPath_clickHandler(event:MouseEvent):void
+			{
+				var file:File = new File;
+				file.addEventListener(Event.SELECT,function(e:Event):void{
+					tiMacExtNativeLib.text = file.nativePath;
+				});
+				file.browseForDirectory("选择一个Mac库文件");
+			}
+			
+			protected function btnBrowseForCertPath_clickHandler(event:MouseEvent):void
+			{
+				var file:File = new File;
+				file.addEventListener(Event.SELECT,function(e:Event):void{
+					tiCertPath.text = file.nativePath;
+				});
+				file.browseForOpen("选择一个数字签名证书文件",FileFilters.P12_FILE_FILTERS);
+			}
+			
+			protected function btnBrowseForAneExportPath_clickHandler(event:MouseEvent):void
+			{
+				var file:File = new File;
+				file.addEventListener(Event.SELECT,function(e:Event):void{
+					tiAneExportPath.text = file.nativePath;
+				});
+				file.browseForSave("选择一个路径用于保存ANE文件");
+			}
+			
+			public function getAneDescFileContent():XML{
+				
+				var airVersion:String = TextTool.isTextEmpty(tiAneAIRVersion)?Config.DEFAULT_AIR_VERSION:tiAneAIRVersion.text;
+				
+				var xml:XML = XML("<extension xmlns=\"http://ns.adobe.com/air/extension/"+airVersion+"\"></extension>");
+				xml.id = tiAneId.text;
+				xml.versionNumber = tiAneVersion.text;
+				if (!TextTool.isTextEmpty(tiAneName)) 
+				{
+					xml.name = tiAneName.text;
+				}
+				if (!TextTool.isTextEmpty(tiAneDesc)) 
+				{
+					xml.description = tiAneDesc.text;
+				}
+				if (!TextTool.isTextEmpty(tiAneCopyright)) 
+				{
+					xml.copyright = tiAneCopyright.text;
+				}
+				
+				//setup platforms
+				var platformsXML:XML = <platforms></platforms>;
+				var platformXML:XML=null;var applicationDeploymentXML:XML=null;
+				xml.appendChild(platformsXML);
+				if (cbSelectAndroid&&cbSelectAndroid.selected) 
+				{
+					platformXML = <platform name="Android-ARM"></platform>;
+					platformsXML.appendChild(platformXML);
+					applicationDeploymentXML = <applicationDeployment></applicationDeployment>;
+					platformXML.appendChild(applicationDeploymentXML);
+					applicationDeploymentXML.nativeLibrary = fileAndroidNativeLib.name;
+					applicationDeploymentXML.initializer = tiAndroidExtInitializer.text;
+					if (!TextTool.isTextEmpty(tiAndroidExtFinalizer)) 
+					{
+						applicationDeploymentXML.finalizer = tiAndroidExtFinalizer.text;
+					}
+				}
+				if (cbSelectiOS&&cbSelectiOS.selected) 
+				{
+					if (rbiOSRealDevice.selected) 
+					{
+						platformXML = <platform name="iPhone-ARM"></platform>;
+						platformsXML.appendChild(platformXML);
+						applicationDeploymentXML = <applicationDeployment></applicationDeployment>;
+						platformXML.appendChild(applicationDeploymentXML);
+						applicationDeploymentXML.nativeLibrary = fileiOSNativeLib.name;
+						applicationDeploymentXML.initializer = tiiOSExtInitializer.text;
+						if (!TextTool.isTextEmpty(tiiOSExtFinalizer))
+						{
+							applicationDeploymentXML.finalizer = tiiOSExtFinalizer.text;
+						}
+					}else{
+						platformXML = <platform name="iPhone-x86"></platform>;
+						platformsXML.appendChild(platformXML);
+						applicationDeploymentXML = <applicationDeployment></applicationDeployment>;
+						platformXML.appendChild(applicationDeploymentXML);
+						applicationDeploymentXML.nativeLibrary = fileiOSNativeLib.name;
+						applicationDeploymentXML.initializer = tiiOSExtInitializer.text;
+						if (!TextTool.isTextEmpty(tiiOSExtFinalizer)) 
+						{
+							applicationDeploymentXML.finalizer = tiiOSExtFinalizer.text;
+						}
+					}
+				}
+				if (cbSelectWindows&&cbSelectWindows.selected) 
+				{
+					platformXML = <platform name="Windows-x86"></platform>;
+					platformsXML.appendChild(platformXML);
+					applicationDeploymentXML = <applicationDeployment></applicationDeployment>;
+					platformXML.appendChild(applicationDeploymentXML);
+					applicationDeploymentXML.nativeLibrary = fileWindowsNativeLib.name;
+					applicationDeploymentXML.initializer = tiWindowsExtInitializer.text;
+					if (!TextTool.isTextEmpty(tiWindowsExtFinalizer)) 
+					{
+						applicationDeploymentXML.finalizer = tiWindowsExtFinalizer.text;
+					}
+				}
+				if (cbSelectMac&&cbSelectMac.selected) 
+				{
+					platformXML = <platform name="MacOS-x86"></platform>;
+					platformsXML.appendChild(platformXML);
+					applicationDeploymentXML = <applicationDeployment></applicationDeployment>;
+					platformXML.appendChild(applicationDeploymentXML);
+					applicationDeploymentXML.nativeLibrary = fileMacNativeLib.name;
+					applicationDeploymentXML.initializer = tiMacExtInitializer.text;
+					if (!TextTool.isTextEmpty(tiMacExtFinalizer)) 
+					{
+						applicationDeploymentXML.finalizer = tiMacExtFinalizer.text;
+					}
+				}
+				return xml;
+			}
+			
+			
+			protected function btnEditAndroidExtAttach_clickHandler(event:MouseEvent):void
+			{
+				new DialogEditPlatformAttach().show("编辑Android本机扩展附件",tiAndroidExtAttachments.text,function(result:String):void{
+					tiAndroidExtAttachments.text = result;
+				});
+			}
+			
+			
+			protected function btnEditAndroidExtDepends_clickHandler(event:MouseEvent):void
+			{
+				new DialogEditPlatformAttach().show("编辑Android本机扩展依赖项",tiAndroidExtDepends.text,function(result:String):void{
+					tiAndroidExtDepends.text = result;
+				});
+			}
+			
+			
+			protected function btnEditiOSExtAttach_clickHandler(event:MouseEvent):void
+			{
+				new DialogEditPlatformAttach().show("编辑iOS本机扩展附件",tiiOSExtAttachments.text,function(result:String):void{
+					tiiOSExtAttachments.text = result;
+				});
+			}
+			
+			protected function btnBrowseForiOSExtPlatformOptionsFile_clickHandler(event:MouseEvent):void
+			{
+				var file:File = new File;
+				file.addEventListener(Event.SELECT,function(e:Event):void{
+					tiiOSExtPlatformOptions.text = file.nativePath;
+				});
+				file.browseForOpen("选择iOS平台选项配置文件",FileFilters.XML_FILE_FILTERS);
+			}
+			
+			protected function btnEditWindowsExtAttach_clickHandler(event:MouseEvent):void
+			{
+				new DialogEditPlatformAttach().show("编辑Windows本机扩展附件",tiWindowsExtAttachments.text,function(result:String):void{
+					tiWindowsExtAttachments.text = result;
+				});
+			}
+			
+			protected function btnEditMacExtAttach_clickHandler(event:MouseEvent):void
+			{
+				new DialogEditPlatformAttach().show("编辑Windows本机扩展附件",tiMacExtAttachments.text,function(result:String):void{
+					tiMacExtAttachments.text = result;
+				});
+			}
+			
+			public function get dirAndroidAttach():File
+			{
+				return _dirAndroidAttach;
+			}
+			
+			public function get fileSwc():File
+			{
+				return _fileSwc;
+			}
+			
+			public function get fileJava():File
+			{
+				return _fileJava;
+			}
+			
+			public function get dirFlexOrAirSDK():File
+			{
+				return _dirFlexOrAirSDK;
+			}
+			
+			public function get fileAndroidNativeLib():File
+			{
+				return _fileAndroidNativeLib;
+			}
+			
+			public function get fileiOSNativeLib():File
+			{
+				return _fileiOSNativeLib;
+			}
+			
+			public function get fileWindowsNativeLib():File
+			{
+				return _fileWindowsNativeLib;
+			}
+			
+			public function get fileMacNativeLib():File
+			{
+				return _fileMacNativeLib;
+			}
+			
+			public function get fileCert():File
+			{
+				return _fileCert;
+			}
+			
+			public function get fileAdt():File
+			{
+				return _fileAdt;
+			}
+			
+			public function get diriOSAttach():File
+			{
+				return _diriOSAttach;
+			}
+			
+			public function get fileAneExport():File
+			{
+				return _fileAneExport;
+			}
+			
+			
+			protected function btnSaveConfigFile_clickHandler(event:MouseEvent):void
+			{
+				saveCurrentConfigToFile();
+			}
+			
+			
+			public function saveCurrentConfigToFile():void{
+				if (checkConfig()) 
+				{
+					var dataForSave:String = JSON.stringify(getPkgAneConfigData());
+					
+					var s:FileStream=null;
+					try{
+						if (fileCurrentConfig.exists) 
+						{
+							s= new FileStream;
+							s.open(fileCurrentConfig,FileMode.WRITE);
+							s.writeUTFBytes(dataForSave);
+							s.close();
+							
+							Log.info("配置文件保存成功");
+						}else{
+							fileCurrentConfig.save(dataForSave,"build_ane.atconf");
+						}
+					}catch(e:Error){
+						fileCurrentConfig.save(dataForSave,"build_ane.atconf");
+						
+						trace(e.getStackTrace());
+					}
+				}else{
+					Log.error("配置有误，无法保存文件");
+				}
+			}
+			
+			public function readConfigFile(file:File):void{
+				try{
+					if (file.exists) 
+					{
+						try{
+							var s:FileStream = new FileStream;
+							s.open(file,FileMode.READ);
+							var jsonStr:String = s.readUTFBytes(s.bytesAvailable);
+							s.close();
+							
+							var obj:Object = JSON.parse(jsonStr);
+							var configData:PkgAneConfigData = new PkgAneConfigData;
+							for(var k:String in obj){
+								configData[k] = obj[k];
+							}
+							setPropertiesByConfigData(configData);
+						}catch(e:Error){
+							Log.error("配置文件格式错误");
+							trace(e.getStackTrace());
+						}
+					}else{
+						Log.error("所选择的文件不存在");
+					}
+				}catch(err:Error){
+					trace(err.getStackTrace());
+				}
+			}
+			
+			public function get fileCurrentConfig():File
+			{
+				if (_fileCurrentConfig==null) 
+				{
+					_fileCurrentConfig = new File;
+				}
+				return _fileCurrentConfig;
+			}
+			
+			public function set fileCurrentConfig(value:File):void{
+				_fileCurrentConfig = value;
+			}
+			
+			
+			public function openConfigFile():void{
+				fileCurrentConfig.browseForOpen("打开配置文件",FileFilters.ATCONF_FILE_FILTERS);
+				fileCurrentConfig.addEventListener(Event.CANCEL,fileCurrentConf_cancelHandler);
+				fileCurrentConfig.addEventListener(Event.SELECT,fileCurrentConf_selectHandler);
+			}
+			
+			protected function btnOpenConfigFile_clickHandler(event:MouseEvent):void
+			{
+				openConfigFile();
+			}
+			
+			private function removeFileCurrentConfigListeners():void{
+				fileCurrentConfig.removeEventListener(Event.CANCEL,fileCurrentConf_cancelHandler);
+				fileCurrentConfig.removeEventListener(Event.SELECT,fileCurrentConf_selectHandler);
+			}
+			
+			protected function fileCurrentConf_cancelHandler(event:Event):void
+			{
+				removeFileCurrentConfigListeners();
+			}
+			
+			protected function fileCurrentConf_selectHandler(event:Event):void
+			{
+				removeFileCurrentConfigListeners();
+				readConfigFile(fileCurrentConfig);
+			}
+			
+			
+			protected function btnDonate_clickHandler(event:MouseEvent):void
+			{
+				DonateWindow.show(this);
+			}
+			
+			protected function windowedapplication1_invokeHandler(event:InvokeEvent):void
+			{
+				if (event.arguments&&event.arguments.length>0) 
+				{
+					var path:String = event.arguments[0];
+					
+					try{
+						fileCurrentConfig = new File(path.replace(/\\/g,"/"));
+						readConfigFile(fileCurrentConfig);
+					}catch(e:Error){
+						trace(e.getStackTrace());
+					}
+				}
+			}
+			
+			protected function windowedapplication1_nativeDragEnterHandler(event:NativeDragEvent):void
+			{
+				var files:Array = event.clipboard.getData(ClipboardFormats.FILE_LIST_FORMAT) as Array;
+				if (files&&files.length>0) 
+				{
+					var file:File = files[0];
+					if (file.exists&&file.extension) 
+					{
+						if (file.extension.toLowerCase()=="atconf") 
+						{
+							NativeDragManager.acceptDragDrop(this);
+						}
+					}
+				}
+			}
+			
+			protected function windowedapplication1_nativeDragDropHandler(event:NativeDragEvent):void
+			{
+				var files:Array = event.clipboard.getData(ClipboardFormats.FILE_LIST_FORMAT) as Array;
+				if (files&&files.length>0) 
+				{
+					var file:File = files[0];
+					if (file.exists&&file.extension) 
+					{
+						if (file.extension.toLowerCase()=="atconf") 
+						{
+							fileCurrentConfig = file;
+							readConfigFile(fileCurrentConfig);
+						}
+					}
+				}
+			}
+			
+			
+			[Bindable]private var _tiSwcPathText:String="";
+			[Bindable]private var _tiJavaPathText:String="/usr/bin/java";
+			[Bindable]private var _tiFlexOrAirSdkText:String="";
+			[Bindable]private var _tiAneIdText:String="com.plter.ANE";
+			[Bindable]private var _tiAneVersionText:String="0.0.0";
+			[Bindable]private var _tiAneAIRVersionText:String=Config.DEFAULT_AIR_VERSION;
+			[Bindable]private var _tiAneNameText:String="";
+			[Bindable]private var _tiAneDescText:String="";
+			[Bindable]private var _tiAneCopyrightText:String="";
+			[Bindable]private var _tiCertPathText:String="";
+			[Bindable]private var _tiCertPasswordText:String="";
+			[Bindable]private var _cbUseTimestapSelected:Boolean = true;
+			[Bindable]private var _tiAneExportPathText:String="";
+			[Bindable]private var _cbSelectAndroidSelected:Boolean=false;
+			[Bindable]private var _tiAndroidExtNativeLibText:String="";
+			[Bindable]private var _tiAndroidExtInitializerText:String;
+			[Bindable]private var _tiAndroidExtFinalizerText:String="";
+			[Bindable]private var _cbAndroidExtSelectAttachmentsSelected:Boolean=false;
+			[Bindable]private var _tiAndroidExtAttachmentsText:String="";
+			[Bindable]private var _cbAndroidExtSelectDependsSelected:Boolean=false;
+			[Bindable]private var _tiAndroidExtDependsText:String="";
+			[Bindable]private var _cbSelectiOSSelected:Boolean=false;
+			[Bindable]private var _rbiOSRealDeviceSelected:Boolean=false;;
+			[Bindable]private var _tiiOSExtNativeLibText:String="";
+			[Bindable]private var _tiiOSExtInitializerText:String="";
+			[Bindable]private var _tiiOSExtFinalizerText:String="";
+			[Bindable]private var _cbiOSExtSelectAttachmentsSelected:Boolean=false;
+			[Bindable]private var _tiiOSExtAttachmentsText:String="";
+			[Bindable]private var _tiiOSExtPlatformOptionsText:String="";
+			[Bindable]private var _cbiOSExtSelectPlatformOptionsSelected:Boolean=false;
+			[Bindable]private var _cbSelectWindowsSelected:Boolean=false;
+			[Bindable]private var _tiWindowsExtNativeLibText:String="";
+			[Bindable]private var _tiWindowsExtInitializerText:String="";
+			[Bindable]private var _tiWindowsExtFinalizerText:String="";
+			[Bindable]private var _cbWindowsExtSelectAttachmentsSelected:Boolean=false;
+			[Bindable]private var _tiWindowsExtAttachmentsText:String="";
+			[Bindable]private var _cbSelectMacSelected:Boolean=false;
+			[Bindable]private var _tiMacExtNativeLibText:String="";
+			[Bindable]private var _tiMacExtInitializerText:String="";
+			[Bindable]private var _tiMacExtFinalizerText:String="";
+			[Bindable]private var _cbMacExtSelectAttachmentsSelected:Boolean=false;
+			[Bindable]private var _tiMacExtAttachmentsText:String="";
+			
+			
+			
+			private  var _dragOutForSaveStartPoint:Point=new Point;
+			private  var _dragOutForSaveCurrentPoint:Point=new Point;
+			private var _dragOutForSaveDataSetted:Boolean=false;
+			[Embed(source="../assets/Res_icon_at_conf_48.png")]private static var IconAtConfClass:Class;
+			private var _atconfFileIcon:BitmapData=null;
+			private function get atconfFileIcon():BitmapData{
+				if (_atconfFileIcon==null) 
+				{
+					_atconfFileIcon = new IconAtConfClass().bitmapData;
+				}
+				return _atconfFileIcon;
+			}
+			
+			protected function windowedapplication1_mouseDownHandler(event:MouseEvent):void
+			{
+				_dragOutForSaveDataSetted=false;
+				_dragOutForSaveStartPoint.x = stage.mouseX;
+				_dragOutForSaveStartPoint.y = stage.mouseY;
+				stage.addEventListener(MouseEvent.MOUSE_MOVE,stage_dragOutForSaveMouseMoveHandler);
+				stage.addEventListener(MouseEvent.MOUSE_UP,stage_dragOutForSaveMouseUpHandler);
+			}
+			
+			protected function stage_dragOutForSaveMouseMoveHandler(event:MouseEvent):void
+			{
+				
+				if (!_dragOutForSaveDataSetted) 
+				{
+					_dragOutForSaveCurrentPoint.x=stage.mouseX;
+					_dragOutForSaveCurrentPoint.y=stage.mouseY;
+					
+					if (Point.distance(_dragOutForSaveCurrentPoint,_dragOutForSaveStartPoint)>5) 
+					{
+						
+						if (checkConfig()) 
+						{
+							var dataForSave:String = JSON.stringify(getPkgAneConfigData());
+							var bytes:ByteArray = new ByteArray;
+							bytes.writeUTFBytes(dataForSave);
+							bytes.position=0;
+							
+							var fp:SimpleFilePromise = new SimpleFilePromise(bytes);
+							
+							var cb:Clipboard = new Clipboard;
+							cb.setData(ClipboardFormats.FILE_PROMISE_LIST_FORMAT,[fp]);
+							NativeDragManager.doDrag(this,cb,atconfFileIcon);
+							
+						}else{
+							Log.error("配置有误，无法保存文件");
+						}
+						
+						_dragOutForSaveDataSetted=true;
+					}
+				}
+			}
+			
+			protected function stage_dragOutForSaveMouseUpHandler(event:MouseEvent):void
+			{
+				stage.removeEventListener(MouseEvent.MOUSE_MOVE,stage_dragOutForSaveMouseMoveHandler);
+				stage.removeEventListener(MouseEvent.MOUSE_UP,stage_dragOutForSaveMouseUpHandler);
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	<s:VGroup width="100%" height="100%" left="10" top="10" right="10" bottom="10">
+		<s:Label width="100%" textAlign="center" fontSize="16" text="梦宇ANE打包工具"/>
+		<s:HGroup width="100%">
+			<s:Button label="打开配置文件" id="btnOpenConfigFile" click="btnOpenConfigFile_clickHandler(event)"/>
+			<s:Button label="保存当前配置" id="btnSaveConfigFile" click="btnSaveConfigFile_clickHandler(event)"/>
+			<s:Button label="给可怜的作者捐款" id="btnDonate" click="btnDonate_clickHandler(event)"/>
+		</s:HGroup>
+		
+		<s:HGroup width="100%">
+			<s:Panel width="70%" height="100" title="AS3 库文件(SWC)路径配置">
+				<s:layout>
+					<s:HorizontalLayout verticalAlign="middle" paddingLeft="10" paddingRight="10"/>
+				</s:layout>
+				<s:Label text="SWC路径"/><ui:PTextInput width="100%" id="tiSwcPath" text="{_tiSwcPathText}"/><s:Button label="浏览" id="btnBrowseForSwcPath" click="btnBrowseForSwcPath_clickHandler(event)"/>
+			</s:Panel>
+			<s:Panel width="70%" height="100" title="环境配置">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" paddingLeft="10" paddingRight="10"/>
+				</s:layout>
+				<s:HGroup width="100%" verticalAlign="middle">
+					<s:Label text="Java 路径" width="80"/><ui:PTextInput width="100%" id="tiJavaPath" text="{_tiJavaPathText}"/><s:Button label="浏览" id="btnBrowseForJavaPath" click="btnBrowseForJavaPath_clickHandler(event)"/>
+				</s:HGroup>
+				<s:HGroup width="100%" verticalAlign="middle">
+					<s:Label text="Flex/AIR SDK" width="80"/><ui:PTextInput width="100%" id="tiFlexOrAirSdk" text="{_tiFlexOrAirSdkText}"/><s:Button label="浏览" id="btnBrowseForFlexOrAirSdk" click="btnBrowseForFlexOrAirSdk_clickHandler(event)"/>
+				</s:HGroup>
+			</s:Panel>
+		</s:HGroup>
+		
+		
+		<s:Panel width="100%" height="300" title="本机扩展(ANE)配置">
+			<s:layout>
+				<s:VerticalLayout paddingTop="5" paddingLeft="10" paddingRight="10"/>
+			</s:layout>
+			
+			<s:Label color="#FF0000" text="红色文字为必填项" fontSize="14" width="100%" textAlign="center"/>
+			<s:HGroup width="100%">
+				<s:VGroup width="40%">
+					<s:HGroup width="100%" verticalAlign="middle">
+						<s:Label styleName="mustInputText" text="ID" width="70"/><ui:PTextInput id="tiAneId" text="{_tiAneIdText}" width="100%"/>
+					</s:HGroup>
+					<s:HGroup width="100%" verticalAlign="middle">
+						<s:Label styleName="mustInputText" text="版本" width="70"/><ui:PTextInput id="tiAneVersion" restrict="0-9." text="{_tiAneVersionText}" width="100%"/>
+					</s:HGroup>
+				</s:VGroup>
+				<s:Line height="100%">
+					<s:stroke>
+						<mx:SolidColorStroke color="#bbbbbb"/>
+					</s:stroke>
+				</s:Line>
+				<s:VGroup width="30%">
+					<s:HGroup width="100%" verticalAlign="middle">
+						<s:Label text="AIR版本" width="70"/><ui:PTextInput toolTip="使用该ANE所要求的最低AIR运行时版本" id="tiAneAIRVersion" text="{_tiAneAIRVersionText}" restrict="0-9." width="100%"/>
+					</s:HGroup>
+					<s:HGroup width="100%" verticalAlign="middle">
+						<s:Label text="ANE名称" width="70"/><ui:PTextInput id="tiAneName" text="{_tiAneNameText}" width="100%"/>
+					</s:HGroup>
+				</s:VGroup>
+				<s:Line height="100%">
+					<s:stroke>
+						<mx:SolidColorStroke color="#bbbbbb"/>
+					</s:stroke>
+				</s:Line>
+				<s:VGroup width="30%">
+					<s:HGroup width="100%" verticalAlign="middle">
+						<s:Label text="ANE描述" width="70"/><ui:PTextInput id="tiAneDesc" text="{_tiAneDescText}" width="100%"/>
+					</s:HGroup>
+					<s:HGroup width="100%" verticalAlign="middle">
+						<s:Label text="版权声明" width="70"/><ui:PTextInput id="tiAneCopyright" text="{_tiAneCopyrightText}" width="100%"/>
+					</s:HGroup>
+				</s:VGroup>
+			</s:HGroup>
+			
+			<mx:TabNavigator id="tnPlatforms" width="100%" tabWidth="{tnPlatforms.width/4}" borderVisible="false">
+				
+				<s:NavigatorContent label="Android">
+					
+					<s:layout>
+						<s:VerticalLayout/>
+					</s:layout>
+					
+					<s:CheckBox id="cbSelectAndroid" selected="{_cbSelectAndroidSelected}" width="100%" label="包括 Android 平台"/>
+					<s:Line width="100%">
+						<s:stroke>
+							<s:SolidColorStroke color="#bbbbbb"/>
+						</s:stroke>
+					</s:Line>
+					<s:HGroup width="100%" enabled="{cbSelectAndroid.selected}">
+						<s:VGroup width="50%">
+							<s:VGroup width="100%">
+								<s:HGroup width="100%" verticalAlign="middle">
+									<s:Label styleName="mustInputText" text="本机库" width="70"/><ui:PTextInput id="tiAndroidExtNativeLib" text="{_tiAndroidExtNativeLibText}" width="100%"/>
+									<s:Button id="btnBrowseForAndroidExtNativeLibPath" label="浏览" click="btnBrowseForAndroidExtNativeLibPath_clickHandler(event)"/>
+								</s:HGroup>
+								<s:HGroup width="100%" verticalAlign="middle">
+									<s:Label styleName="mustInputText enText" text="Initializer" width="70"/><ui:PTextInput id="tiAndroidExtInitializer" text="{_tiAndroidExtInitializerText}" width="100%"/>
+								</s:HGroup>
+								<s:HGroup width="100%" verticalAlign="middle">
+									<s:Label text="Finalizer" styleName="enText" width="70"/><ui:PTextInput id="tiAndroidExtFinalizer" text="{_tiAndroidExtFinalizerText}" width="100%"/>
+								</s:HGroup>
+							</s:VGroup>
+						</s:VGroup>
+						<s:Line height="100%">
+							<s:stroke>
+								<s:SolidColorStroke color="#bbbbbb"/>
+							</s:stroke>
+						</s:Line>
+						<s:VGroup width="50%">
+							<s:HGroup width="100%" verticalAlign="middle">
+								<s:CheckBox id="cbAndroidExtSelectAttachments" selected="{_cbAndroidExtSelectAttachmentsSelected}" label="附件" width="70"/>
+								<ui:PTextInput enabled="{cbAndroidExtSelectAttachments.selected}" id="tiAndroidExtAttachments" text="{_tiAndroidExtAttachmentsText}" width="100%"/>
+								<s:Button enabled="{cbAndroidExtSelectAttachments.selected}" id="btnEditAndroidExtAttach" label="编辑" click="btnEditAndroidExtAttach_clickHandler(event)"/>
+							</s:HGroup>
+							<s:HGroup width="100%" verticalAlign="middle">
+								<s:CheckBox id="cbAndroidExtSelectDepends" selected="{_cbAndroidExtSelectDependsSelected}" label="依赖项" width="70"/>
+								<ui:PTextInput enabled="{cbAndroidExtSelectDepends.selected}" id="tiAndroidExtDepends" text="{_tiAndroidExtDependsText}" width="100%"/>
+								<s:Button enabled="{cbAndroidExtSelectDepends.selected}" id="btnEditAndroidExtDepends" label="编辑" click="btnEditAndroidExtDepends_clickHandler(event)"/>
+							</s:HGroup>
+						</s:VGroup>
+					</s:HGroup>
+				</s:NavigatorContent>
+				<s:NavigatorContent label="iOS">
+					<s:layout>
+						<s:VerticalLayout/>
+					</s:layout>
+					
+					<s:HGroup width="100%">
+						<s:CheckBox id="cbSelectiOS" selected="{_cbSelectiOSSelected}" width="100%" label="包括 iOS 平台"/>
+						<s:RadioButton enabled="{cbSelectiOS.selected}" label="真机" selected="{_rbiOSRealDeviceSelected}" id="rbiOSRealDevice" groupName="iosDeviceOptions"/>
+						<s:RadioButton enabled="{cbSelectiOS.selected}" label="模拟器" groupName="iosDeviceOptions"/>
+					</s:HGroup>
+					<s:Line width="100%">
+						<s:stroke>
+							<s:SolidColorStroke color="#bbbbbb"/>
+						</s:stroke>
+					</s:Line>
+					<s:HGroup width="100%" enabled="{cbSelectiOS.selected}">
+						<s:VGroup width="50%">
+							<s:VGroup width="100%">
+								<s:HGroup width="100%" verticalAlign="middle">
+									<s:Label styleName="mustInputText" text="本机库" width="75"/><ui:PTextInput id="tiiOSExtNativeLib" text="{_tiiOSExtNativeLibText}" width="100%"/>
+									<s:Button id="btnBrowseForiOSExtNativeLibPath" label="浏览" click="btnBrowseForiOSExtNativeLibPath_clickHandler(event)"/>
+								</s:HGroup>
+								<s:HGroup width="100%" verticalAlign="middle">
+									<s:Label styleName="mustInputText enText" text="Initializer" width="75"/><ui:PTextInput id="tiiOSExtInitializer" text="{_tiiOSExtInitializerText}" width="100%"/>
+								</s:HGroup>
+								<s:HGroup width="100%" verticalAlign="middle">
+									<s:Label text="Finalizer" styleName="enText" width="75"/><ui:PTextInput id="tiiOSExtFinalizer" text="{_tiiOSExtFinalizerText}" width="100%"/>
+								</s:HGroup>
+							</s:VGroup>
+						</s:VGroup>
+						<s:Line height="100%">
+							<s:stroke>
+								<s:SolidColorStroke color="#bbbbbb"/>
+							</s:stroke>
+						</s:Line>
+						<s:VGroup width="50%">
+							<s:HGroup width="100%" verticalAlign="middle">
+								<s:CheckBox id="cbiOSExtSelectAttachments" selected="{_cbiOSExtSelectAttachmentsSelected}" label="附件" width="75"/>
+								<ui:PTextInput enabled="{cbiOSExtSelectAttachments.selected}" id="tiiOSExtAttachments" text="{_tiiOSExtAttachmentsText}" width="100%"/>
+								<s:Button enabled="{cbiOSExtSelectAttachments.selected}" id="btnEditiOSExtAttach" label="编辑" click="btnEditiOSExtAttach_clickHandler(event)"/>
+							</s:HGroup>
+							<s:HGroup width="100%" verticalAlign="middle">
+								<s:CheckBox id="cbiOSExtSelectPlatformOptions" selected="{_cbiOSExtSelectPlatformOptionsSelected}" label="平台选项" width="75"/>
+								<ui:PTextInput enabled="{cbiOSExtSelectPlatformOptions.selected}" id="tiiOSExtPlatformOptions" text="{_tiiOSExtPlatformOptionsText}" width="100%"/>
+								<s:Button enabled="{cbiOSExtSelectPlatformOptions.selected}" id="btnBrowseForiOSExtPlatformOptionsFile" label="浏览" click="btnBrowseForiOSExtPlatformOptionsFile_clickHandler(event)"/>
+							</s:HGroup>
+						</s:VGroup>
+					</s:HGroup>
+				</s:NavigatorContent>
+				<s:NavigatorContent label="Windows">
+					<s:layout>
+						<s:VerticalLayout/>
+					</s:layout>
+					<s:CheckBox id="cbSelectWindows" selected="{_cbSelectWindowsSelected}" width="100%" label="包括 Windows 平台"/>
+					<s:Line width="100%">
+						<s:stroke>
+							<s:SolidColorStroke color="#bbbbbb"/>
+						</s:stroke>
+					</s:Line>
+					<s:HGroup width="100%" enabled="{cbSelectWindows.selected}">
+						
+						<s:VGroup width="50%">
+							<s:VGroup width="100%">
+								<s:HGroup width="100%" verticalAlign="middle">
+									<s:Label styleName="mustInputText" text="本机库" width="70"/><ui:PTextInput id="tiWindowsExtNativeLib" text="{_tiWindowsExtNativeLibText}" width="100%"/>
+									<s:Button id="btnBrowseForWindowsExtNativeLibPath" label="浏览" click="btnBrowseForWindowsExtNativeLibPath_clickHandler(event)"/>
+								</s:HGroup>
+								<s:HGroup width="100%" verticalAlign="middle">
+									<s:Label styleName="mustInputText enText" text="Initializer" width="70"/><ui:PTextInput id="tiWindowsExtInitializer" text="{_tiWindowsExtInitializerText}" width="100%"/>
+								</s:HGroup>
+								<s:HGroup width="100%" verticalAlign="middle">
+									<s:Label text="Finalizer" styleName="enText" width="70"/><ui:PTextInput id="tiWindowsExtFinalizer" text="{_tiWindowsExtFinalizerText}" width="100%"/>
+								</s:HGroup>
+							</s:VGroup>
+						</s:VGroup>
+						<s:Line height="100%">
+							<s:stroke>
+								<s:SolidColorStroke color="#bbbbbb"/>
+							</s:stroke>
+						</s:Line>
+						<s:VGroup width="50%">
+							<s:HGroup width="100%" verticalAlign="middle">
+								<s:CheckBox id="cbWindowsExtSelectAttachments" selected="{_cbWindowsExtSelectAttachmentsSelected}" label="附件" width="70"/>
+								<ui:PTextInput enabled="{cbWindowsExtSelectAttachments.selected}" id="tiWindowsExtAttachments" text="{_tiWindowsExtAttachmentsText}" width="100%"/>
+								<s:Button enabled="{cbWindowsExtSelectAttachments.selected}" id="btnEditWindowsExtAttach" label="编辑" click="btnEditWindowsExtAttach_clickHandler(event)"/>
+							</s:HGroup>
+						</s:VGroup>
+					</s:HGroup>
+				</s:NavigatorContent>
+				<s:NavigatorContent label="Mac OS X">
+					
+					<s:layout>
+						<s:VerticalLayout/>
+					</s:layout>
+					<s:CheckBox id="cbSelectMac" selected="{_cbSelectMacSelected}" width="100%" label="包括 Mac OS X 平台"/>
+					
+					<s:Line width="100%">
+						<s:stroke>
+							<s:SolidColorStroke color="#bbbbbb"/>
+						</s:stroke>
+					</s:Line>
+					
+					<s:HGroup width="100%" enabled="{cbSelectMac.selected}">
+						<s:VGroup width="50%">
+							
+							<s:VGroup width="100%">
+								<s:HGroup width="100%" verticalAlign="middle">
+									<s:Label styleName="mustInputText" text="本机库" width="70"/><ui:PTextInput id="tiMacExtNativeLib" text="{_tiMacExtNativeLibText}" width="100%"/>
+									<s:Button id="btnBrowseForMacExtNativeLibPath" label="浏览" click="btnBrowseForMacExtNativeLibPath_clickHandler(event)"/>
+								</s:HGroup>
+								<s:HGroup width="100%" verticalAlign="middle">
+									<s:Label styleName="mustInputText enText" text="Initializer" width="70"/><ui:PTextInput id="tiMacExtInitializer" text="{_tiMacExtInitializerText}" width="100%"/>
+								</s:HGroup>
+								<s:HGroup width="100%" verticalAlign="middle">
+									<s:Label text="Finalizer" styleName="enText" width="70"/><ui:PTextInput id="tiMacExtFinalizer" text="{_tiMacExtFinalizerText}" width="100%"/>
+								</s:HGroup>
+							</s:VGroup>
+						</s:VGroup>
+						<s:Line height="100%">
+							<s:stroke>
+								<s:SolidColorStroke color="#bbbbbb"/>
+							</s:stroke>
+						</s:Line>
+						<s:VGroup width="50%">
+							<s:HGroup width="100%" verticalAlign="middle">
+								<s:CheckBox id="cbMacExtSelectAttachments" selected="{_cbMacExtSelectAttachmentsSelected}" label="附件" width="70"/>
+								<ui:PTextInput enabled="{cbMacExtSelectAttachments.selected}" id="tiMacExtAttachments" text="{_tiMacExtAttachmentsText}" width="100%"/>
+								<s:Button enabled="{cbMacExtSelectAttachments.selected}" id="btnEditMacExtAttach" label="编辑" click="btnEditMacExtAttach_clickHandler(event)"/>
+							</s:HGroup>
+						</s:VGroup>
+					</s:HGroup>
+					
+				</s:NavigatorContent>
+			</mx:TabNavigator>
+			
+		</s:Panel>
+		
+		<s:HGroup width="100%" height="100%">
+			<s:Panel width="40%" height="100%" title="数字签名 及 打包">
+				<s:layout>
+					<s:VerticalLayout paddingBottom="5" paddingLeft="10" paddingTop="5" paddingRight="10"/>
+				</s:layout>
+				
+				<s:HGroup width="100%" verticalAlign="middle">
+					<s:Label text="证书"/>
+					<ui:PTextInput id="tiCertPath" text="{_tiCertPathText}" width="100%"/>
+					<s:Button id="btnBrowseForCertPath" label="浏览" click="btnBrowseForCertPath_clickHandler(event)"/>
+				</s:HGroup>
+				<s:HGroup width="100%" verticalAlign="middle">
+					<s:Label text="密码"/>
+					<ui:PTextInput displayAsPassword="true" id="tiCertPassword" text="{_tiCertPasswordText}" width="100%"/>
+					<s:CheckBox id="cbUseTimestap" selected="{_cbUseTimestapSelected}" label="时间戳" width="70"/>
+				</s:HGroup>
+				<s:Line width="100%">
+					<s:stroke>
+						<mx:SolidColorStroke color="#bbbbbb"/>
+					</s:stroke>
+				</s:Line>
+				<s:HGroup width="100%" verticalAlign="middle">
+					<s:Label text="ANE导出路径"/>
+					<ui:PTextInput id="tiAneExportPath" text="{_tiAneExportPathText}" width="100%"/>
+					<s:Button id="btnBrowseForAneExportPath" label="浏览" click="btnBrowseForAneExportPath_clickHandler(event)"/>
+				</s:HGroup>
+				
+				<s:Button label="开始生成ANE" id="btnGenAne" width="100%" click="btnGenAne_clickHandler(event)"/>
+			</s:Panel>
+			
+			<s:Panel width="60%" height="100%" title="控制台">
+				<ui:PTextArea width="100%" height="100%" id="taOutput"/>
+			</s:Panel>
+		</s:HGroup>
+		
+		<s:HGroup width="100%" verticalAlign="middle" horizontalAlign="center">
+			<s:Label fontSize="16" textDecoration="underline" color="#0000FF" id="btnGoPlter" click="btnGoPlter_clickHandler(event)" text="plter.com"/>
+		</s:HGroup>
+	</s:VGroup>
+</s:WindowedApplication>

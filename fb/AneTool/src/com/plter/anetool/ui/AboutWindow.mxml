@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:PWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		   xmlns:s="library://ns.adobe.com/flex/spark" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx" 
+		   xmlns:ui="com.plter.anetool.ui.*" 
+		   showStatusBar="false" width="350" height="180" fontSize="14" fontFamily="宋体"
+		   close="pwindow1_closeHandler(event)" creationComplete="pwindow1_creationCompleteHandler(event)">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.core.IWindow;
+			import mx.events.FlexEvent;
+			
+			protected function pwindow1_creationCompleteHandler(event:FlexEvent):void
+			{
+				var xml:XML = NativeApplication.nativeApplication.applicationDescriptor;
+				var ns:Namespace = xml.namespace();
+				var versionNum:String = xml.ns::versionNumber;
+				
+				txtAppVersion.text = "软件版本："+versionNum;	
+			}
+			
+			private static var __aboutWindow:AboutWindow = null;
+			
+			public static function show(parentWindow:IWindow):void{
+				if (__aboutWindow==null) 
+				{
+					__aboutWindow = new AboutWindow;
+					__aboutWindow.parentWindow = parentWindow;
+					__aboutWindow.open();
+				}
+			}
+			
+			protected function pwindow1_closeHandler(event:Event):void
+			{
+				__aboutWindow = null;
+			}
+			
+			protected function btnClose_clickHandler(event:MouseEvent):void
+			{
+				close();
+			}
+			
+			
+		]]>
+	</fx:Script>
+	
+	<ui:layout>
+		<s:VerticalLayout paddingLeft="10" paddingBottom="10" paddingRight="10" paddingTop="10"/>
+	</ui:layout>
+	
+	<s:Label width="100%" textAlign="center" text="梦宇ANE打包工具" fontSize="18"/>
+	<mx:Text width="100%" height="100%">
+		<mx:htmlText>
+			<![CDATA[梦宇ANE打包工具用于简化ANE打包的流程<br>梦宇博客：<u><font color="#0000ff"><a href="http://blog.plter.com">http://blog.plter.com</a></font></u><br>梦宇网店：<u><font color="#0000ff"><a href="http://plter.taobao.com">http://plter.taobao.com</a></font></u>]]>
+		</mx:htmlText>
+	</mx:Text>
+	<mx:Text id="txtAppVersion" width="100%"/>
+	<s:HGroup width="100%" horizontalAlign="right">
+		<s:Button label="关闭" id="btnClose" click="btnClose_clickHandler(event)"/>
+	</s:HGroup>
+</ui:PWindow>

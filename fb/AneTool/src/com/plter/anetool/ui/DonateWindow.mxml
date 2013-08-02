@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:PWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			xmlns:s="library://ns.adobe.com/flex/spark" 
+			xmlns:mx="library://ns.adobe.com/flex/mx" 
+			xmlns:ui="com.plter.anetool.ui.*" 
+			width="350" height="200" showStatusBar="false" fontSize="14" fontFamily="宋体"
+			close="pwindow1_closeHandler(event)">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import flash.net.navigateToURL;
+			
+			import mx.core.IWindow;
+			private static var __donateWindow:DonateWindow = null;
+			
+			public static function show(parentWindow:IWindow):void{
+				if (__donateWindow==null) 
+				{
+					__donateWindow = new DonateWindow;
+					__donateWindow.parentWindow = parentWindow;
+					__donateWindow.open();
+				}
+			}
+			
+			protected function pwindow1_closeHandler(event:Event):void
+			{
+				__donateWindow = null;
+			}
+			
+			protected function btnClose_clickHandler(event:MouseEvent):void
+			{
+				close();
+			}
+			
+			protected function btnDonate_clickHandler(event:MouseEvent):void
+			{
+				navigateToURL(new URLRequest("https://me.alipay.com/plter"));
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<ui:layout>
+		<s:VerticalLayout paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10"/>
+	</ui:layout>
+	
+	<s:Label width="100%" text="说明" fontSize="18" textAlign="center"/>
+	<mx:Text width="100%" height="100%">
+		<mx:htmlText>
+			<![CDATA[&nbsp;&nbsp;您的捐助将会给我无穷的动力，让我做出更多更好的软件。捐款后您的大名和网站链接将会出现在所有梦宇软件新版本的资助列表中，有钱的帮个钱场，没钱的帮个人场多多分享这个软件。]]>
+		</mx:htmlText>
+	</mx:Text>
+	<s:HGroup width="100%" horizontalAlign="center">
+		<s:Button id="btnDonate" label="给这个可怜的家伙捐款" click="btnDonate_clickHandler(event)"/>
+	</s:HGroup>
+	<s:HGroup width="100%" horizontalAlign="right">
+		<s:Button label="关闭" id="btnClose" click="btnClose_clickHandler(event)"/>
+	</s:HGroup>
+	
+</ui:PWindow>

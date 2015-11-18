@@ -2,3 +2,6 @@
 bin
 gen
 bin-debug
+.idea
+*.iml
+out

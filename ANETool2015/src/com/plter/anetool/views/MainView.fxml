@@ -1,24 +1,29 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import com.plter.anetool.views.CachedTextField?>
 <VBox fx:controller="com.plter.anetool.controllers.MainViewController"
-      xmlns:fx="http://javafx.com/fxml" style="-fx-padding: 10px;-fx-spacing: 10px">
+      xmlns:fx="http://javafx.com/fxml"
+      style="-fx-padding: 10px;-fx-spacing: 10px"
+      fx:id="rootContainer">
 
     <HBox alignment="CENTER" style="-fx-spacing: 10px">
         <Label text="JDK/JRE 路径" style="-fx-pref-width: 150px"/>
-        <TextField HBox.hgrow="ALWAYS"/>
-        <Button text="..." fx:id="btnBrowseForJdkPath"/>
+        <CachedTextField cacheKey="jdkPath" HBox.hgrow="ALWAYS" fx:id="tfJdkPath"/>
+        <Button text="..." fx:id="btnBrowseForJdkPath" onAction="#btnBrowseForJdkPathClickHandler"/>
     </HBox>
 
     <HBox alignment="CENTER" style="-fx-spacing: 10px">
         <Label text="Flex/AIR SDK 路径" style="-fx-pref-width: 150px"/>
-        <TextField HBox.hgrow="ALWAYS"/>
-        <Button text="..." fx:id="btnBrowseForFlexOrAIRSDKPath"/>
+        <CachedTextField fx:id="tfAirSDKPath" cacheKey="airsdkPath" HBox.hgrow="ALWAYS"/>
+        <Button text="..." fx:id="btnBrowseForAIRSDKPath" onAction="#btnBrowseForAirSDKPathClickHandler"/>
     </HBox>
+
+    <Separator/>
 
     <HBox alignment="CENTER" style="-fx-spacing: 10px">
         <Label text="SWC路径" style="-fx-pref-width: 150px"/>
-        <TextField HBox.hgrow="ALWAYS"/>
-        <Button text="..." fx:id="btnBrowseForSwcPath"/>
+        <CachedTextField fx:id="tfSwcPath" cacheKey="swfPath" HBox.hgrow="ALWAYS"/>
+        <Button text="..." fx:id="btnBrowseForSwcPath" onAction="#btnBrowseForSwcPathClickHandler"/>
     </HBox>
 
 
@@ -28,7 +33,7 @@
             <VBox fx:id="containerAndroidPlatform" managed="false" visible="false" style="-fx-spacing: 5px">
                 <HBox alignment="CENTER" style="-fx-spacing: 10px">
                     <Label text="jar/so路径" style="-fx-pref-width: 80px"/>
-                    <TextField HBox.hgrow="ALWAYS"/>
+                    <CachedTextField cacheKey="jarOrSoPath" HBox.hgrow="ALWAYS"/>
                     <Button text="..." fx:id="btnBrowseForAndroidJarPath"/>
                 </HBox>
                 <HBox alignment="CENTER" style="-fx-spacing: 10px">

@@ -1,8 +1,135 @@
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox fx:controller="com.plter.anetool.controllers.MainViewController"
+      xmlns:fx="http://javafx.com/fxml" style="-fx-padding: 10px;-fx-spacing: 10px">
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<GridPane fx:controller="com.plter.anetool.controllers.MainViewController"
-          xmlns:fx="http://javafx.com/fxml" alignment="center" hgap="10" vgap="10">
-</GridPane>
+    <HBox alignment="CENTER" style="-fx-spacing: 10px">
+        <Label text="JDK/JRE 路径" style="-fx-pref-width: 150px"/>
+        <TextField HBox.hgrow="ALWAYS"/>
+        <Button text="..." fx:id="btnBrowseForJdkPath"/>
+    </HBox>
+
+    <HBox alignment="CENTER" style="-fx-spacing: 10px">
+        <Label text="Flex/AIR SDK 路径" style="-fx-pref-width: 150px"/>
+        <TextField HBox.hgrow="ALWAYS"/>
+        <Button text="..." fx:id="btnBrowseForFlexOrAIRSDKPath"/>
+    </HBox>
+
+    <HBox alignment="CENTER" style="-fx-spacing: 10px">
+        <Label text="SWC路径" style="-fx-pref-width: 150px"/>
+        <TextField HBox.hgrow="ALWAYS"/>
+        <Button text="..." fx:id="btnBrowseForSwcPath"/>
+    </HBox>
+
+
+    <ScrollPane VBox.vgrow="ALWAYS" vbarPolicy="AS_NEEDED" style="-fx-padding: 5px" fitToWidth="true">
+        <VBox VBox.vgrow="ALWAYS" style="-fx-spacing: 5px">
+            <CheckBox fx:id="cbSupportAndroid" text="包括Android平台"/>
+            <VBox fx:id="containerAndroidPlatform" managed="false" visible="false" style="-fx-spacing: 5px">
+                <HBox alignment="CENTER" style="-fx-spacing: 10px">
+                    <Label text="jar/so路径" style="-fx-pref-width: 80px"/>
+                    <TextField HBox.hgrow="ALWAYS"/>
+                    <Button text="..." fx:id="btnBrowseForAndroidJarPath"/>
+                </HBox>
+                <HBox alignment="CENTER" style="-fx-spacing: 10px">
+                    <Label text="Initializer" style="-fx-pref-width: 80px"/>
+                    <TextField HBox.hgrow="ALWAYS"/>
+                </HBox>
+                <HBox alignment="CENTER" style="-fx-spacing: 10px">
+                    <Label text="Finalizer" style="-fx-pref-width: 80px"/>
+                    <TextField HBox.hgrow="ALWAYS"/>
+                </HBox>
+            </VBox>
+
+            <Separator/>
+
+            <CheckBox text="包括iOS平台" fx:id="cbSupportiOS"/>
+            <VBox fx:id="containeriOSPlatform" managed="false" visible="false" style="-fx-spacing: 5px">
+                <HBox alignment="CENTER" style="-fx-spacing: 10px">
+                    <Label text="a文件路径" style="-fx-pref-width: 80px"/>
+                    <TextField HBox.hgrow="ALWAYS"/>
+                    <Button text="..." fx:id="btnBrowseForiOSAPath"/>
+                </HBox>
+                <HBox alignment="CENTER" style="-fx-spacing: 10px">
+                    <Label text="Initializer" style="-fx-pref-width: 80px"/>
+                    <TextField HBox.hgrow="ALWAYS"/>
+                </HBox>
+                <HBox alignment="CENTER" style="-fx-spacing: 10px">
+                    <Label text="Finalizer" style="-fx-pref-width: 80px"/>
+                    <TextField HBox.hgrow="ALWAYS"/>
+                </HBox>
+            </VBox>
+
+            <Separator/>
+
+            <CheckBox text="包括Windows平台" fx:id="cbSupportWindows"/>
+            <VBox fx:id="containerWindowsPlatform" managed="false" visible="false" style="-fx-spacing: 5px">
+                <HBox alignment="CENTER" style="-fx-spacing: 10px">
+                    <Label text="dll文件路径" style="-fx-pref-width: 80px"/>
+                    <TextField HBox.hgrow="ALWAYS"/>
+                    <Button text="..." fx:id="btnBrowseForWindowsDllPath"/>
+                </HBox>
+                <HBox alignment="CENTER" style="-fx-spacing: 10px">
+                    <Label text="Initializer" style="-fx-pref-width: 80px"/>
+                    <TextField HBox.hgrow="ALWAYS"/>
+                </HBox>
+                <HBox alignment="CENTER" style="-fx-spacing: 10px">
+                    <Label text="Finalizer" style="-fx-pref-width: 80px"/>
+                    <TextField HBox.hgrow="ALWAYS"/>
+                </HBox>
+            </VBox>
+
+            <Separator/>
+
+            <CheckBox text="包括Mac平台" fx:id="cbSupportMac"/>
+            <VBox fx:id="containerMacPlatform" managed="false" visible="false" style="-fx-spacing: 5px">
+                <HBox alignment="CENTER" style="-fx-spacing: 10px">
+                    <Label text="dll文件路径" style="-fx-pref-width: 80px"/>
+                    <TextField HBox.hgrow="ALWAYS"/>
+                    <Button text="..." fx:id="btnBrowseForMacAPath"/>
+                </HBox>
+                <HBox alignment="CENTER" style="-fx-spacing: 10px">
+                    <Label text="Initializer" style="-fx-pref-width: 80px"/>
+                    <TextField HBox.hgrow="ALWAYS"/>
+                </HBox>
+                <HBox alignment="CENTER" style="-fx-spacing: 10px">
+                    <Label text="Finalizer" style="-fx-pref-width: 80px"/>
+                    <TextField HBox.hgrow="ALWAYS"/>
+                </HBox>
+            </VBox>
+
+        </VBox>
+    </ScrollPane>
+
+    <HBox style="-fx-spacing: 10px">
+        <VBox HBox.hgrow="ALWAYS" style="-fx-spacing: 5px">
+            <HBox alignment="CENTER" style="-fx-spacing: 10px">
+                <Label text="签名证书路径" style="-fx-pref-width: 100px"/>
+                <TextField HBox.hgrow="ALWAYS"/>
+                <Button text="..." fx:id="btnBrowseForCertPath"/>
+            </HBox>
+            <HBox alignment="CENTER" style="-fx-spacing: 10px">
+                <Label text="密码" style="-fx-pref-width: 100px"/>
+                <PasswordField HBox.hgrow="ALWAYS"/>
+            </HBox>
+            <CheckBox text="是否使用时间戳" selected="true"/>
+
+            <Separator/>
+            <HBox style="-fx-alignment: center;-fx-spacing: 10px">
+                <Label text="ANE保存路径" style="-fx-pref-width: 100px"/>
+                <TextField HBox.hgrow="ALWAYS"/>
+                <Button text="..."/>
+            </HBox>
+        </VBox>
+
+        <Separator orientation="VERTICAL"/>
+
+        <VBox style="-fx-pref-width: 200px;-fx-spacing: 5px">
+            <HBox style="-fx-spacing: 5px">
+                <Button fx:id="btnClearOutput" onAction="#btnClearOutputClicked" text="清空"/>
+                <Button text="开始生成ANE"/>
+            </HBox>
+            <TextArea editable="false" fx:id="taOutput" style="-fx-pref-width: 200px;-fx-pref-height: 90px"/>
+        </VBox>
+    </HBox>
+</VBox>

@@ -5,3 +5,4 @@ bin-debug
 .idea
 *.iml
 out
+MANIFEST.MF

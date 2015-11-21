@@ -1,0 +1,34 @@
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Button?>
+<VBox fx:controller="com.plter.anetool.controllers.DonateViewController" xmlns:fx="http://javafx.com/fxml"
+      style="-fx-spacing: 10px;-fx-alignment: top-center;-fx-padding: 10px;-fx-font-size: 12pt;-fx-background-color: white"
+      fx:id="rootContainer">
+
+    <Text wrappingWidth="600"
+          text="您的捐助将会给我无穷的动力，让我做出更多更好的软件。捐款后您的大名和网站链接将会出现在所有梦宇软件新版本的资助列表中，有钱的帮个钱场，没钱的帮个人场多多分享这个软件。"/>
+
+    <Separator/>
+
+    <HBox style="-fx-alignment: top-center" VBox.vgrow="ALWAYS">
+        <VBox style="-fx-min-width: 50%;-fx-alignment: top-center">
+            <Label text="支付宝捐款"/>
+            <ImageView fx:id="imgAlipayDonate"/>
+        </VBox>
+        <VBox style="-fx-min-width: 50%;-fx-alignment: top-center">
+            <Label text="微信捐款"/>
+            <ImageView fx:id="imgWechatDonate"/>
+        </VBox>
+    </HBox>
+
+    <Label text="捐助者列表: 徐邦挺"/>
+    <Separator/>
+
+    <HBox style="-fx-alignment: top-right">
+        <Button text="关闭" onAction="#btnCloseClickHandler"/>
+    </HBox>
+</VBox>

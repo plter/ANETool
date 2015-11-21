@@ -6,4 +6,5 @@ package com.plter.anetool.res;
 public class Strings {
 
     public static final String TITLE = "梦宇ANETool2015";
+    public static final String VERSION = "v2015.001";
 }

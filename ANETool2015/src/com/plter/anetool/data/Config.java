@@ -6,4 +6,6 @@ package com.plter.anetool.data;
 public class Config {
 
     public static final String LOCAL_CACHE_NODE_NAME = "AneTool2015";
+
+    public static final String DEFAULT_CHARSET = "UTF-8";
 }

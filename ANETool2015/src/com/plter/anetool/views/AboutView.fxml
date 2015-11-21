@@ -1,0 +1,33 @@
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Separator?>
+<VBox fx:controller="com.plter.anetool.controllers.AboutViewController" xmlns:fx="http://javafx.com/fxml"
+      fx:id="rootContainer"
+      style="-fx-padding: 10px;-fx-spacing: 5px">
+    <VBox VBox.vgrow="ALWAYS">
+        <HBox style="-fx-spacing: 5px;-fx-alignment: center-left">
+            <Label text="软件说明:"/>
+            <Text text="梦宇ANE打包工具用于简化ANE打包的工作流程"/>
+        </HBox>
+        <HBox style="-fx-spacing: 5px;-fx-alignment: center-left">
+            <Label text="软件版本:"/>
+            <Text fx:id="txtVersion"/>
+        </HBox>
+        <HBox style="-fx-spacing: 5px;-fx-alignment: center-left">
+            <Label text="作者主页:"/>
+            <Hyperlink text="http://plter.com" onAction="#hyperLinkClickedHandler"/>
+        </HBox>
+        <HBox style="-fx-spacing: 5px;-fx-alignment: center-left">
+            <Label text="开源地址:"/>
+            <Hyperlink text="https://github.com/plter/ANETool" onAction="#hyperLinkClickedHandler"/>
+        </HBox>
+    </VBox>
+    <Separator/>
+    <HBox alignment="BASELINE_RIGHT">
+        <Button text="关闭" onAction="#btnCloseClickHandler"/>
+    </HBox>
+</VBox>

@@ -30,8 +30,9 @@ public class Dialogs {
         }
     }
 
-    public static void showSaveFileDialogAndGetResultToTextField(Window window, String dialogTitle, TextField resultText) {
+    public static void showSaveFileDialogAndGetResultToTextField(Window window, String dialogTitle,String initialFileName, TextField resultText) {
         FileChooser fc = new FileChooser();
+        fc.setInitialFileName(initialFileName);
         fc.setTitle(dialogTitle);
         File f = fc.showSaveDialog(window);
         if (f != null) {

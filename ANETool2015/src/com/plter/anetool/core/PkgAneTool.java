@@ -126,8 +126,11 @@ public class PkgAneTool {
                         return;
                     }
 
+                    Log.infoFromAnotherThread("创建Android临时工作目录");
                     androidWorkDir = new File(tmpWorkDir,"AndroidARM");
                     androidWorkDir.mkdirs();
+
+                    Log.infoFromAnotherThread("拷贝相关资源到Android临时工作目录");
                     FileTool.copyTo(librarySwfFile,new File(androidWorkDir,"library.swf"));
                     FileTool.copyTo(jarOrSoFile,new File(androidWorkDir,jarOrSoFile.getName()));
                 }
@@ -162,7 +165,7 @@ public class PkgAneTool {
                     args.add(".");
                 }
 
-                Platform.runLater(() -> Log.info("执行命令:"+ ArrayTool.join(args," ")));
+                Platform.runLater(() -> Log.info("执行打包命令:"+ ArrayTool.join(args," ")));
                 ProcessBuilder pb = new ProcessBuilder(args);
                 try {
                     int resultCode = pb.start().waitFor();

@@ -4,7 +4,11 @@
 
     <s:Button label="Call native hello" id="btnSayHello" click="btnSayHello_clickHandler(event)"/>
     <fx:Script><![CDATA[
+        import com.plter.hello.HelloNative;
+
         private function btnSayHello_clickHandler(event:MouseEvent):void {
+            var h:HelloNative = new HelloNative();
+            h.sayHello();
         }
         ]]></fx:Script>
 </s:View>

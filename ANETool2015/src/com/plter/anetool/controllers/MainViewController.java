@@ -123,7 +123,7 @@ public class MainViewController implements Initializable {
     }
 
     public void btnAneSavedPathClickHandler(ActionEvent actionEvent) {
-        Dialogs.showSaveFileDialogAndGetResultToTextField(getWindow(),"选择ANE文件的保存路径", tfAneOutputPath);
+        Dialogs.showSaveFileDialogAndGetResultToTextField(getWindow(),"选择ANE文件的保存路径","FlashLib.ane", tfAneOutputPath);
     }
 
     public void btnDonateClickHandler(ActionEvent actionEvent) {

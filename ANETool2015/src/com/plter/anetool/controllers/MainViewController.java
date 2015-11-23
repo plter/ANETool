@@ -1,8 +1,9 @@
 package com.plter.anetool.controllers;
 
-import com.plter.anetool.core.PkgAneTool;
+import com.plter.anetool.core.PkgAneOpt;
 import com.plter.anetool.data.Config;
 import com.plter.anetool.models.AneConfigInfo;
+import com.plter.anetool.utils.FileTool;
 import com.plter.anetool.utils.Log;
 import com.plter.anetool.views.*;
 import javafx.event.ActionEvent;
@@ -11,14 +12,13 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
+import org.json.JSONException;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -55,6 +55,7 @@ public class MainViewController implements Initializable {
     public CachedTextField tfAirVersion;
     public CachedTextField tfAneId;
     public CachedTextField tfAneVersion;
+    public HBox containerAndroidPlatformHeader;
     private Window window;
     private File configFile=null;//The ane tool config file
 
@@ -89,6 +90,8 @@ public class MainViewController implements Initializable {
     private void syncContainerAndroidPlatformState() {
         containerAndroidPlatform.setManaged(cbSupportAndroid.isSelected());
         containerAndroidPlatform.setVisible(cbSupportAndroid.isSelected());
+        containerAndroidPlatformHeader.setManaged(cbSupportAndroid.isSelected());
+        containerAndroidPlatformHeader.setVisible(cbSupportAndroid.isSelected());
     }
 
     public Window getWindow() {
@@ -131,7 +134,7 @@ public class MainViewController implements Initializable {
     }
 
     public void btnStartGenAneClickedHandler(ActionEvent actionEvent) {
-        PkgAneTool.startPkgAne(tfAirSDKPath.getText(),makeAneConfigInfo());
+        PkgAneOpt.startPkgAne(tfAirSDKPath.getText(),makeAneConfigInfo());
     }
 
     private AneConfigInfo makeAneConfigInfo(){
@@ -179,6 +182,42 @@ public class MainViewController implements Initializable {
                 Log.info("保存文件成功");
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    public void syncUiStatusWithConfigInfo(AneConfigInfo info){
+        tfSwcPath.setText(info.swcPath);
+        tfAirVersion.setText(info.airVersion);
+        tfAneVersion.setText(info.aneVersion);
+        tfAneId.setText(info.aneId);
+        cbSupportAndroid.setSelected(info.supportAndroid);
+        if(cbSupportAndroid.isSelected()) {
+            tfJarOrSoPath.setText(info.jarOrSoPath);
+            tfAndroidInitializer.setText(info.androidInitializer);
+            tfAndroidFinalizer.setText(info.androidFinalizer);
+        }
+        tfCertPath.setText(info.certPath);
+        tfCertPassword.setText(info.certPassword);
+        cbUseTimestamp.setSelected(info.useTimestamp);
+        tfAneOutputPath.setText(info.aneOutputPath);
+    }
+
+    public void btnOpenConfigFileClickedHandler(ActionEvent actionEvent) {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("打开配置文件");
+        configFile = fc.showOpenDialog(getWindow());
+        if (configFile!=null){
+            try {
+                String jsonStr = FileTool.getFileContent(configFile);
+                AneConfigInfo info = AneConfigInfo.fromJsonString(jsonStr);
+                syncUiStatusWithConfigInfo(info);
+            } catch (JSONException e) {
+                e.printStackTrace();
+                Log.error("配置文件格式错误");
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.error("打开配置文件出错");
             }
         }
     }

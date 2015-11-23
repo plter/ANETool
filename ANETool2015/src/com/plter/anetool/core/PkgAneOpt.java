@@ -15,7 +15,7 @@ import java.util.zip.ZipFile;
 /**
  * Created by plter on 11/20/15.
  */
-public class PkgAneTool {
+public class PkgAneOpt {
 
 
     public static void startPkgAne(String airSdkHome,AneConfigInfo info){

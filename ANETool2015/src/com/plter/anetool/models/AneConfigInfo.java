@@ -75,4 +75,24 @@ public class AneConfigInfo {
         content.append("</extension>");
         return content.toString();
     }
+
+    public static AneConfigInfo fromJsonString(String jsonString) throws JSONException {
+        JSONObject obj = new JSONObject(jsonString);
+        AneConfigInfo info = new AneConfigInfo();
+        info.swcPath = obj.getString("swcPath");
+        info.airVersion = obj.getString("airVersion");
+        info.aneVersion = obj.getString("aneVersion");
+        info.aneId = obj.getString("aneId");
+        info.supportAndroid = obj.getBoolean("supportAndroid");
+        if (info.supportAndroid){
+            info.jarOrSoPath = obj.getString("jarOrSoPath");
+            info.androidInitializer = obj.getString("androidInitializer");
+            info.androidFinalizer = obj.getString("androidFinalizer");
+        }
+        info.certPath = obj.getString("certPath");
+        info.certPassword = obj.getString("certPassword");
+        info.useTimestamp = obj.getBoolean("useTimestamp");
+        info.aneOutputPath = obj.getString("aneOutputPath");
+        return info;
+    }
 }

@@ -9,7 +9,7 @@
       fx:id="rootContainer">
 
     <HBox style="-fx-spacing: 5px;-fx-alignment: center-left">
-        <Button text="打开"/>
+        <Button text="打开" onAction="#btnOpenConfigFileClickedHandler"/>
         <Button text="保存" onAction="#btnSaveConfigFileClickedHandler"/>
         <Button text="捐助" onAction="#btnDonateClickHandler"/>
         <Button text="关于" onAction="#btnAboutClickHandler"/>
@@ -57,7 +57,19 @@
 
             <ScrollPane VBox.vgrow="ALWAYS" vbarPolicy="AS_NEEDED" style="-fx-padding: 5px" fitToWidth="true">
                 <VBox VBox.vgrow="ALWAYS" style="-fx-spacing: 5px">
-                    <CachedCheckBox cacheKey="supportAndroid" fx:id="cbSupportAndroid" text="包括Android平台"/>
+                    <HBox style="-fx-spacing: 5px;-fx-alignment: center-left">
+                        <CachedCheckBox cacheKey="supportAndroid" fx:id="cbSupportAndroid" text="包括Android平台"/>
+
+                        <HBox fx:id="containerAndroidPlatformHeader" style="-fx-alignment: center-left;-fx-spacing: 5px">
+                            <Separator orientation="VERTICAL"/>
+                            <Label text="平台架构"/>
+                            <fx:define>
+                                <ToggleGroup fx:id="androidAppAbi"/>
+                            </fx:define>
+                            <RadioButton text="ARM" selected="true" toggleGroup="$androidAppAbi"/>
+                            <RadioButton text="x86" disable="true" toggleGroup="$androidAppAbi"/>
+                        </HBox>
+                    </HBox>
                     <VBox fx:id="containerAndroidPlatform" managed="false" visible="false" style="-fx-spacing: 5px">
                         <HBox alignment="CENTER" style="-fx-spacing: 10px">
                             <Label text="jar/so路径" style="-fx-pref-width: 80px"/>

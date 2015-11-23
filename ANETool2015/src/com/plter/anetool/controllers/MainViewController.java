@@ -14,7 +14,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
@@ -47,19 +46,17 @@ public class MainViewController implements Initializable {
     public VBox rootContainer;
     public CachedTextField tfAirSDKPath;
     public TextField tfSwcPath;
-    public Button btnBrowseForAndroidJarOrSoPath;
-    public TextField tfJarOrSoPath;
+    public Button btnBrowseForAndroidJarPath;
+    public TextField tfJarPath;
     public TextField tfCertPath;
     public Button btnBrowseForCertPath;
     public PasswordField tfCertPassword;
     public TextField tfAneOutputPath;
     public TextField tfAndroidInitializer;
-    public TextField tfAndroidFinalizer;
     public CheckBox cbUseTimestamp;
     public TextField tfAirVersion;
     public TextField tfAneId;
     public TextField tfAneVersion;
-    public HBox containerAndroidPlatformHeader;
     public RecentFilesListView lvRecentConfigFiles;
     private Window window;
     private File currentConfigFile = null;//The ane tool config file
@@ -106,8 +103,6 @@ public class MainViewController implements Initializable {
     private void syncContainerAndroidPlatformState() {
         containerAndroidPlatform.setManaged(cbSupportAndroid.isSelected());
         containerAndroidPlatform.setVisible(cbSupportAndroid.isSelected());
-        containerAndroidPlatformHeader.setManaged(cbSupportAndroid.isSelected());
-        containerAndroidPlatformHeader.setVisible(cbSupportAndroid.isSelected());
     }
 
     public Window getWindow() {
@@ -129,8 +124,8 @@ public class MainViewController implements Initializable {
         Dialogs.showOpenFileDialogAndGetResultToTextField(getWindow(), "浏览swc文件", tfSwcPath);
     }
 
-    public void btnBrowseForAndroidJarOrSoPathClickHandler(ActionEvent actionEvent) {
-        Dialogs.showOpenFileDialogAndGetResultToTextField(getWindow(), "浏览jar/so文件", tfJarOrSoPath);
+    public void btnBrowseForAndroidJarPathClickHandler(ActionEvent actionEvent) {
+        Dialogs.showOpenFileDialogAndGetResultToTextField(getWindow(), "浏览jar/so文件", tfJarPath);
     }
 
     public void btnBrowseForCertPathClickHandler(ActionEvent actionEvent) {
@@ -162,9 +157,8 @@ public class MainViewController implements Initializable {
 
         info.supportAndroid = cbSupportAndroid.isSelected();
         if (info.supportAndroid) {
-            info.jarOrSoPath = tfJarOrSoPath.getText();
+            info.jarPath = tfJarPath.getText();
             info.androidInitializer = tfAndroidInitializer.getText();
-            info.androidFinalizer = tfAndroidFinalizer.getText();
         }
         //TODO support ios,windows,mac
 
@@ -209,9 +203,8 @@ public class MainViewController implements Initializable {
         tfAneId.setText(info.aneId);
         cbSupportAndroid.setSelected(info.supportAndroid);
         if (cbSupportAndroid.isSelected()) {
-            tfJarOrSoPath.setText(info.jarOrSoPath);
+            tfJarPath.setText(info.jarPath);
             tfAndroidInitializer.setText(info.androidInitializer);
-            tfAndroidFinalizer.setText(info.androidFinalizer);
         }
         tfCertPath.setText(info.certPath);
         tfCertPassword.setText(info.certPassword);

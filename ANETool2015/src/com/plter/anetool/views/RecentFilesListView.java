@@ -19,7 +19,6 @@ public class RecentFilesListView extends ListView<RecentFilesListCellData> {
 
     private Preferences prefs = Preferences.userRoot().node(Config.LOCAL_CACHE_NODE_NAME).node("recentFileList");
 
-
     public RecentFilesListView() {
         setCellFactory(param -> new RecentFilesListCell());
         readCachedData();

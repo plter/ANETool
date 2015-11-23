@@ -120,7 +120,7 @@ public class PkgAneOpt {
                 File androidWorkDir = null;
 
                 if (info.supportAndroid){
-                    File jarOrSoFile = new File(info.jarOrSoPath);
+                    File jarOrSoFile = new File(info.jarPath);
                     if (!jarOrSoFile.exists()){
                         Platform.runLater(() -> Log.info("所选的Android本机库文件不存在"));
                         return;

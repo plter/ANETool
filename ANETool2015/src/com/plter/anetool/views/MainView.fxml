@@ -56,42 +56,26 @@
 
             <ScrollPane VBox.vgrow="ALWAYS" vbarPolicy="AS_NEEDED" style="-fx-padding: 5px" fitToWidth="true">
                 <VBox VBox.vgrow="ALWAYS" style="-fx-spacing: 5px">
-                    <HBox style="-fx-spacing: 5px;-fx-alignment: center-left">
-                        <CheckBox fx:id="cbSupportAndroid" text="包括Android平台"/>
 
-                        <HBox fx:id="containerAndroidPlatformHeader"
-                              style="-fx-alignment: center-left;-fx-spacing: 5px">
-                            <Separator orientation="VERTICAL"/>
-                            <Label text="平台架构"/>
-                            <fx:define>
-                                <ToggleGroup fx:id="androidAppAbi"/>
-                            </fx:define>
-                            <RadioButton text="ARM" selected="true" toggleGroup="$androidAppAbi"/>
-                            <RadioButton text="x86" disable="true" toggleGroup="$androidAppAbi"/>
-                        </HBox>
-                    </HBox>
+                    <CheckBox fx:id="cbSupportAndroid" text="包括Android平台"/>
+
                     <VBox fx:id="containerAndroidPlatform" managed="false" visible="false" style="-fx-spacing: 5px">
                         <HBox alignment="CENTER" style="-fx-spacing: 10px">
-                            <Label text="jar/so路径" style="-fx-pref-width: 80px"/>
-                            <TextField fx:id="tfJarOrSoPath" HBox.hgrow="ALWAYS"/>
-                            <Button text="..." fx:id="btnBrowseForAndroidJarOrSoPath"
-                                    onAction="#btnBrowseForAndroidJarOrSoPathClickHandler"/>
+                            <Label text="jar路径" style="-fx-pref-width: 80px"/>
+                            <TextField fx:id="tfJarPath" HBox.hgrow="ALWAYS"/>
+                            <Button text="..." fx:id="btnBrowseForAndroidJarPath"
+                                    onAction="#btnBrowseForAndroidJarPathClickHandler"/>
                         </HBox>
                         <HBox alignment="CENTER" style="-fx-spacing: 10px">
                             <Label text="Initializer" style="-fx-pref-width: 80px"/>
                             <TextField fx:id="tfAndroidInitializer"
                                              HBox.hgrow="ALWAYS"/>
                         </HBox>
-                        <HBox alignment="CENTER" style="-fx-spacing: 10px">
-                            <Label text="Finalizer" style="-fx-pref-width: 80px"/>
-                            <TextField fx:id="tfAndroidFinalizer"
-                                             HBox.hgrow="ALWAYS"/>
-                        </HBox>
                     </VBox>
 
                     <Separator/>
 
-                    <CheckBox text="包括iOS平台" fx:id="cbSupportiOS"/>
+                    <CheckBox text="包括iOS平台" fx:id="cbSupportiOS" disable="true"/>
                     <VBox fx:id="containeriOSPlatform" managed="false" visible="false" style="-fx-spacing: 5px">
                         <HBox alignment="CENTER" style="-fx-spacing: 10px">
                             <Label text="a文件路径" style="-fx-pref-width: 80px"/>
@@ -110,7 +94,7 @@
 
                     <Separator/>
 
-                    <CheckBox text="包括Windows平台" fx:id="cbSupportWindows"/>
+                    <CheckBox text="包括Windows平台" fx:id="cbSupportWindows" disable="true"/>
                     <VBox fx:id="containerWindowsPlatform" managed="false" visible="false" style="-fx-spacing: 5px">
                         <HBox alignment="CENTER" style="-fx-spacing: 10px">
                             <Label text="dll文件路径" style="-fx-pref-width: 80px"/>
@@ -129,7 +113,7 @@
 
                     <Separator/>
 
-                    <CheckBox text="包括Mac平台" fx:id="cbSupportMac"/>
+                    <CheckBox text="包括Mac平台" fx:id="cbSupportMac" disable="true"/>
                     <VBox fx:id="containerMacPlatform" managed="false" visible="false" style="-fx-spacing: 5px">
                         <HBox alignment="CENTER" style="-fx-spacing: 10px">
                             <Label text="dll文件路径" style="-fx-pref-width: 80px"/>

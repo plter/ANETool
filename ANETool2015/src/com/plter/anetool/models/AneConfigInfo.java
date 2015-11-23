@@ -14,8 +14,8 @@ public class AneConfigInfo {
     public String airVersion,aneVersion,aneId;
 
     public boolean supportAndroid=false;
-    public String jarOrSoPath;
-    public String androidInitializer,androidFinalizer;
+    public String jarPath;
+    public String androidInitializer;
 
     public boolean supportiOS=false;
 
@@ -38,9 +38,8 @@ public class AneConfigInfo {
 
             jo.put("supportAndroid",supportAndroid);
             if (supportAndroid){
-                jo.put("jarOrSoPath",jarOrSoPath);
+                jo.put("jarPath", jarPath);
                 jo.put("androidInitializer",androidInitializer);
-                jo.put("androidFinalizer",androidFinalizer);
             }
 
             //TODO support ios,windows,mac
@@ -66,7 +65,7 @@ public class AneConfigInfo {
         if (supportAndroid){
             content.append(String.format("<platform name=\"%s\">","Android-ARM"));
             content.append("<applicationDeployment>");
-            content.append(String.format("<nativeLibrary>%s</nativeLibrary>",new File(jarOrSoPath).getName()));
+            content.append(String.format("<nativeLibrary>%s</nativeLibrary>",new File(jarPath).getName()));
             content.append(String.format("<initializer>%s</initializer>",androidInitializer));
             content.append("</applicationDeployment>");
             content.append("</platform>");
@@ -85,9 +84,8 @@ public class AneConfigInfo {
         info.aneId = obj.getString("aneId");
         info.supportAndroid = obj.getBoolean("supportAndroid");
         if (info.supportAndroid){
-            info.jarOrSoPath = obj.getString("jarOrSoPath");
+            info.jarPath = obj.getString("jarPath");
             info.androidInitializer = obj.getString("androidInitializer");
-            info.androidFinalizer = obj.getString("androidFinalizer");
         }
         info.certPath = obj.getString("certPath");
         info.certPassword = obj.getString("certPassword");

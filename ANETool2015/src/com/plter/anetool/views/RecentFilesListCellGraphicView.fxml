@@ -1,0 +1,16 @@
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.Button?>
+<VBox fx:controller="com.plter.anetool.controllers.RecentFilesListCellGraphicViewController"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:id="rootContainer" fillWidth="true" onMouseEntered="#mouseEnterHandler" onMouseExited="#mouseExitedHandler">
+
+    <HBox style="-fx-alignment: center-left;-fx-spacing: 3px">
+        <Button text="X" style="-fx-font-size: 6pt" fx:id="btnClose" managed="false" visible="false" onAction="#btnCloseClickedHandler"/>
+        <Label fx:id="labelTitle" style="-fx-font-size: 10pt;-fx-font-weight: bold"/>
+    </HBox>
+
+    <Text fx:id="txtDecription" style="-fx-font-size: 8pt"/>
+</VBox>

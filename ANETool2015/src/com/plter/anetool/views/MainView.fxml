@@ -1,8 +1,6 @@
+<?import com.plter.anetool.views.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import com.plter.anetool.views.CachedTextField?>
-<?import com.plter.anetool.views.CachedCheckBox?>
-<?import com.plter.anetool.views.CachedPasswordField?>
 <VBox fx:controller="com.plter.anetool.controllers.MainViewController"
       xmlns:fx="http://javafx.com/fxml"
       style="-fx-padding: 10px;-fx-spacing: 5px"
@@ -23,10 +21,11 @@
 
     <Separator/>
 
-    <HBox VBox.vgrow="ALWAYS">
+    <HBox VBox.vgrow="ALWAYS" style="-fx-spacing: 5px">
 
-        <VBox style="-fx-pref-width: 150px">
+        <VBox style="-fx-pref-width: 200px;-fx-spacing: 5px">
             <Label text="配置文件列表"/>
+            <RecentFilesListView VBox.vgrow="ALWAYS" fx:id="lvRecentConfigFiles"/>
         </VBox>
 
         <Separator orientation="VERTICAL"/>
@@ -35,32 +34,33 @@
 
             <HBox alignment="CENTER" style="-fx-spacing: 5px">
                 <Label text="SWC路径"/>
-                <CachedTextField fx:id="tfSwcPath" cacheKey="swcPath" style="-fx-max-width: 120px"/>
+                <TextField fx:id="tfSwcPath" style="-fx-max-width: 120px"/>
                 <Button text="..." fx:id="btnBrowseForSwcPath" onAction="#btnBrowseForSwcPathClickHandler"/>
 
                 <Separator orientation="VERTICAL"/>
 
                 <Label text="ANE ID"/>
-                <CachedTextField HBox.hgrow="ALWAYS" cacheKey="aneId" fx:id="tfAneId"/>
+                <TextField HBox.hgrow="ALWAYS" fx:id="tfAneId"/>
 
                 <Separator orientation="VERTICAL"/>
 
                 <Label text="AIR版本"/>
-                <CachedTextField cacheKey="airVersion" fx:id="tfAirVersion" style="-fx-max-width: 50px"/>
+                <TextField fx:id="tfAirVersion" style="-fx-max-width: 50px"/>
 
                 <Separator orientation="VERTICAL"/>
 
                 <Label text="ANE版本"/>
-                <CachedTextField cacheKey="aneVersion" fx:id="tfAneVersion" style="-fx-max-width: 70px"/>
+                <TextField fx:id="tfAneVersion" style="-fx-max-width: 70px"/>
             </HBox>
 
 
             <ScrollPane VBox.vgrow="ALWAYS" vbarPolicy="AS_NEEDED" style="-fx-padding: 5px" fitToWidth="true">
                 <VBox VBox.vgrow="ALWAYS" style="-fx-spacing: 5px">
                     <HBox style="-fx-spacing: 5px;-fx-alignment: center-left">
-                        <CachedCheckBox cacheKey="supportAndroid" fx:id="cbSupportAndroid" text="包括Android平台"/>
+                        <CheckBox fx:id="cbSupportAndroid" text="包括Android平台"/>
 
-                        <HBox fx:id="containerAndroidPlatformHeader" style="-fx-alignment: center-left;-fx-spacing: 5px">
+                        <HBox fx:id="containerAndroidPlatformHeader"
+                              style="-fx-alignment: center-left;-fx-spacing: 5px">
                             <Separator orientation="VERTICAL"/>
                             <Label text="平台架构"/>
                             <fx:define>
@@ -73,17 +73,19 @@
                     <VBox fx:id="containerAndroidPlatform" managed="false" visible="false" style="-fx-spacing: 5px">
                         <HBox alignment="CENTER" style="-fx-spacing: 10px">
                             <Label text="jar/so路径" style="-fx-pref-width: 80px"/>
-                            <CachedTextField fx:id="tfJarOrSoPath" cacheKey="jarOrSoPath" HBox.hgrow="ALWAYS"/>
+                            <TextField fx:id="tfJarOrSoPath" HBox.hgrow="ALWAYS"/>
                             <Button text="..." fx:id="btnBrowseForAndroidJarOrSoPath"
                                     onAction="#btnBrowseForAndroidJarOrSoPathClickHandler"/>
                         </HBox>
                         <HBox alignment="CENTER" style="-fx-spacing: 10px">
                             <Label text="Initializer" style="-fx-pref-width: 80px"/>
-                            <CachedTextField fx:id="tfAndroidInitializer" cacheKey="androidInitializer" HBox.hgrow="ALWAYS"/>
+                            <TextField fx:id="tfAndroidInitializer"
+                                             HBox.hgrow="ALWAYS"/>
                         </HBox>
                         <HBox alignment="CENTER" style="-fx-spacing: 10px">
                             <Label text="Finalizer" style="-fx-pref-width: 80px"/>
-                            <CachedTextField fx:id="tfAndroidFinalizer" cacheKey="androidFinalizer" HBox.hgrow="ALWAYS"/>
+                            <TextField fx:id="tfAndroidFinalizer"
+                                             HBox.hgrow="ALWAYS"/>
                         </HBox>
                     </VBox>
 
@@ -151,19 +153,19 @@
                 <VBox HBox.hgrow="ALWAYS" style="-fx-spacing: 5px">
                     <HBox alignment="CENTER" style="-fx-spacing: 10px">
                         <Label text="签名证书路径" style="-fx-pref-width: 100px"/>
-                        <CachedTextField cacheKey="certPath" fx:id="tfCertPath" HBox.hgrow="ALWAYS"/>
+                        <TextField fx:id="tfCertPath" HBox.hgrow="ALWAYS"/>
                         <Button text="..." fx:id="btnBrowseForCertPath" onAction="#btnBrowseForCertPathClickHandler"/>
                     </HBox>
                     <HBox alignment="CENTER" style="-fx-spacing: 10px">
                         <Label text="密码" style="-fx-pref-width: 100px"/>
-                        <CachedPasswordField fx:id="tfCertPassword" cacheKey="certPassword" HBox.hgrow="ALWAYS"/>
+                        <PasswordField fx:id="tfCertPassword" HBox.hgrow="ALWAYS"/>
                     </HBox>
-                    <CachedCheckBox fx:id="cbUseTimestamp" cacheKey="useTimestamp" text="是否使用时间戳"/>
+                    <CheckBox fx:id="cbUseTimestamp" text="是否使用时间戳"/>
 
                     <Separator/>
                     <HBox style="-fx-alignment: center;-fx-spacing: 10px">
                         <Label text="ANE保存路径" style="-fx-pref-width: 100px"/>
-                        <CachedTextField fx:id="tfAneOutputPath" cacheKey="aneSavedPath" HBox.hgrow="ALWAYS"/>
+                        <TextField fx:id="tfAneOutputPath" HBox.hgrow="ALWAYS"/>
                         <Button text="..." onAction="#btnAneSavedPathClickHandler"/>
                     </HBox>
                 </VBox>

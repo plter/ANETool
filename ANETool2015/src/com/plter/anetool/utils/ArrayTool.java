@@ -7,14 +7,18 @@ import java.util.List;
  */
 public class ArrayTool {
 
-    public static String join(List<String> list,String sep){
-        StringBuilder content = new StringBuilder();
+    public static String join(List<?> list,String sep){
+        if (list.size()>0) {
+            StringBuilder content = new StringBuilder();
 
-        for (String str:list) {
-            content.append(String.format("%s ",str));
+            for (Object str : list) {
+                content.append(String.format("%s%s", str.toString(), sep));
+            }
+            content.deleteCharAt(content.length() - 1);
+
+            return content.toString();
+        }else {
+            return null;
         }
-        content.deleteCharAt(content.length()-1);
-
-        return content.toString();
     }
 }

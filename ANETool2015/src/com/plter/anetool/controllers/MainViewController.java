@@ -3,22 +3,26 @@ package com.plter.anetool.controllers;
 import com.plter.anetool.core.PkgAneOpt;
 import com.plter.anetool.data.Config;
 import com.plter.anetool.models.AneConfigInfo;
+import com.plter.anetool.models.RecentFilesListCellData;
 import com.plter.anetool.utils.FileTool;
 import com.plter.anetool.utils.Log;
-import com.plter.anetool.views.*;
+import com.plter.anetool.views.CachedTextField;
+import com.plter.anetool.views.Dialogs;
+import com.plter.anetool.views.RecentFilesListView;
+import com.plter.anetool.views.ViewTool;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import org.json.JSONException;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -42,22 +46,23 @@ public class MainViewController implements Initializable {
     public Button btnBrowseForAIRSDKPath;
     public VBox rootContainer;
     public CachedTextField tfAirSDKPath;
-    public CachedTextField tfSwcPath;
+    public TextField tfSwcPath;
     public Button btnBrowseForAndroidJarOrSoPath;
-    public CachedTextField tfJarOrSoPath;
-    public CachedTextField tfCertPath;
+    public TextField tfJarOrSoPath;
+    public TextField tfCertPath;
     public Button btnBrowseForCertPath;
-    public CachedPasswordField tfCertPassword;
-    public CachedTextField tfAneOutputPath;
-    public CachedTextField tfAndroidInitializer;
-    public CachedTextField tfAndroidFinalizer;
-    public CachedCheckBox cbUseTimestamp;
-    public CachedTextField tfAirVersion;
-    public CachedTextField tfAneId;
-    public CachedTextField tfAneVersion;
+    public PasswordField tfCertPassword;
+    public TextField tfAneOutputPath;
+    public TextField tfAndroidInitializer;
+    public TextField tfAndroidFinalizer;
+    public CheckBox cbUseTimestamp;
+    public TextField tfAirVersion;
+    public TextField tfAneId;
+    public TextField tfAneVersion;
     public HBox containerAndroidPlatformHeader;
+    public RecentFilesListView lvRecentConfigFiles;
     private Window window;
-    private File configFile=null;//The ane tool config file
+    private File currentConfigFile = null;//The ane tool config file
 
     public static Scene createScene() {
         return new Scene(ViewTool.loadView("MainView.fxml"), 1000, 700);
@@ -85,6 +90,17 @@ public class MainViewController implements Initializable {
             containerMacPlatform.setManaged(newValue);
             containerMacPlatform.setVisible(newValue);
         });
+
+        initRecentConfigFilesListView();
+    }
+
+    private void initRecentConfigFilesListView() {
+        lvRecentConfigFiles.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue!=null) {
+                syncUIStatusWithConfigFile(newValue.getFile());
+            }
+        });
+        lvRecentConfigFiles.getSelectionModel().select(0);
     }
 
     private void syncContainerAndroidPlatformState() {
@@ -95,7 +111,7 @@ public class MainViewController implements Initializable {
     }
 
     public Window getWindow() {
-        if (window==null){
+        if (window == null) {
             window = rootContainer.getScene().getWindow();
         }
         return window;
@@ -106,19 +122,19 @@ public class MainViewController implements Initializable {
     }
 
     public void btnBrowseForAirSDKPathClickHandler(ActionEvent actionEvent) {
-        Dialogs.showDirectoryDialogAndGetResultToTextField(getWindow(),"浏览Flex/AIR SDK目录",tfAirSDKPath);
+        Dialogs.showDirectoryDialogAndGetResultToTextField(getWindow(), "浏览Flex/AIR SDK目录", tfAirSDKPath);
     }
 
     public void btnBrowseForSwcPathClickHandler(ActionEvent actionEvent) {
-        Dialogs.showOpenFileDialogAndGetResultToTextField(getWindow(),"浏览swc文件",tfSwcPath);
+        Dialogs.showOpenFileDialogAndGetResultToTextField(getWindow(), "浏览swc文件", tfSwcPath);
     }
 
     public void btnBrowseForAndroidJarOrSoPathClickHandler(ActionEvent actionEvent) {
-        Dialogs.showOpenFileDialogAndGetResultToTextField(getWindow(),"浏览jar/so文件",tfJarOrSoPath);
+        Dialogs.showOpenFileDialogAndGetResultToTextField(getWindow(), "浏览jar/so文件", tfJarOrSoPath);
     }
 
     public void btnBrowseForCertPathClickHandler(ActionEvent actionEvent) {
-        Dialogs.showOpenFileDialogAndGetResultToTextField(getWindow(),"浏览证书文件",tfCertPath);
+        Dialogs.showOpenFileDialogAndGetResultToTextField(getWindow(), "浏览证书文件", tfCertPath);
     }
 
     public void btnAboutClickHandler(ActionEvent actionEvent) {
@@ -126,7 +142,7 @@ public class MainViewController implements Initializable {
     }
 
     public void btnAneSavedPathClickHandler(ActionEvent actionEvent) {
-        Dialogs.showSaveFileDialogAndGetResultToTextField(getWindow(),"选择ANE文件的保存路径","FlashLib.ane", tfAneOutputPath);
+        Dialogs.showSaveFileDialogAndGetResultToTextField(getWindow(), "选择ANE文件的保存路径", "FlashLib.ane", tfAneOutputPath);
     }
 
     public void btnDonateClickHandler(ActionEvent actionEvent) {
@@ -134,10 +150,10 @@ public class MainViewController implements Initializable {
     }
 
     public void btnStartGenAneClickedHandler(ActionEvent actionEvent) {
-        PkgAneOpt.startPkgAne(tfAirSDKPath.getText(),makeAneConfigInfo());
+        PkgAneOpt.startPkgAne(tfAirSDKPath.getText(), makeAneConfigInfo());
     }
 
-    private AneConfigInfo makeAneConfigInfo(){
+    private AneConfigInfo makeAneConfigInfo() {
         AneConfigInfo info = new AneConfigInfo();
         info.swcPath = tfSwcPath.getText();
         info.airVersion = tfAirVersion.getText();
@@ -161,20 +177,20 @@ public class MainViewController implements Initializable {
     }
 
     public void btnSaveConfigFileClickedHandler(ActionEvent actionEvent) {
-        if (configFile==null){
+        if (currentConfigFile == null) {
             FileChooser fc = new FileChooser();
             fc.setTitle("请选择配置文件保存地址");
             fc.setInitialFileName("BuildAne.atconfig");
-            configFile = fc.showSaveDialog(getWindow());
+            currentConfigFile = fc.showSaveDialog(getWindow());
         }
 
-        if (configFile!=null){
+        if (currentConfigFile != null) {
             try {
-                if (!configFile.exists()){
-                    configFile.createNewFile();
+                if (!currentConfigFile.exists()) {
+                    currentConfigFile.createNewFile();
                 }
 
-                FileOutputStream fos = new FileOutputStream(configFile);
+                FileOutputStream fos = new FileOutputStream(currentConfigFile);
                 fos.write(makeAneConfigInfo().toJSONString().getBytes(Config.DEFAULT_CHARSET));
                 fos.flush();
                 fos.close();
@@ -186,13 +202,13 @@ public class MainViewController implements Initializable {
         }
     }
 
-    public void syncUiStatusWithConfigInfo(AneConfigInfo info){
+    public void syncUiStatusWithConfigInfo(AneConfigInfo info) {
         tfSwcPath.setText(info.swcPath);
         tfAirVersion.setText(info.airVersion);
         tfAneVersion.setText(info.aneVersion);
         tfAneId.setText(info.aneId);
         cbSupportAndroid.setSelected(info.supportAndroid);
-        if(cbSupportAndroid.isSelected()) {
+        if (cbSupportAndroid.isSelected()) {
             tfJarOrSoPath.setText(info.jarOrSoPath);
             tfAndroidInitializer.setText(info.androidInitializer);
             tfAndroidFinalizer.setText(info.androidFinalizer);
@@ -203,22 +219,29 @@ public class MainViewController implements Initializable {
         tfAneOutputPath.setText(info.aneOutputPath);
     }
 
+    private void syncUIStatusWithConfigFile(File file){
+        currentConfigFile = file;
+
+        try {
+            String jsonStr = FileTool.getFileContent(file);
+            AneConfigInfo info = AneConfigInfo.fromJsonString(jsonStr);
+            syncUiStatusWithConfigInfo(info);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            Log.error("配置文件格式错误");
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.error("打开配置文件出错");
+        }
+    }
+
     public void btnOpenConfigFileClickedHandler(ActionEvent actionEvent) {
         FileChooser fc = new FileChooser();
         fc.setTitle("打开配置文件");
-        configFile = fc.showOpenDialog(getWindow());
-        if (configFile!=null){
-            try {
-                String jsonStr = FileTool.getFileContent(configFile);
-                AneConfigInfo info = AneConfigInfo.fromJsonString(jsonStr);
-                syncUiStatusWithConfigInfo(info);
-            } catch (JSONException e) {
-                e.printStackTrace();
-                Log.error("配置文件格式错误");
-            } catch (IOException e) {
-                e.printStackTrace();
-                Log.error("打开配置文件出错");
-            }
+        File file = fc.showOpenDialog(getWindow());
+        if (file != null) {
+            lvRecentConfigFiles.addItem(new RecentFilesListCellData(file));
+            syncUIStatusWithConfigFile(file);
         }
     }
 }

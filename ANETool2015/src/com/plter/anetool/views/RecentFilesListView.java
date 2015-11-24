@@ -75,4 +75,9 @@ public class RecentFilesListView extends ListView<RecentFilesListCellData> {
         getItems().remove(data);
         saveRecentFiles();
     }
+
+    public void addAndSelectItem(RecentFilesListCellData data) {
+        addItem(data);
+        getSelectionModel().select(data);
+    }
 }

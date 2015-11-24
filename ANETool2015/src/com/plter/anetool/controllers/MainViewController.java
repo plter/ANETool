@@ -171,17 +171,26 @@ public class MainViewController implements Initializable {
     }
 
     public void btnSaveConfigFileClickedHandler(ActionEvent actionEvent) {
+
+        boolean firstSave = false;
+
         if (currentConfigFile == null) {
             FileChooser fc = new FileChooser();
             fc.setTitle("请选择配置文件保存地址");
             fc.setInitialFileName("BuildAne.atconfig");
             currentConfigFile = fc.showSaveDialog(getWindow());
+
+            firstSave = true;
         }
 
         if (currentConfigFile != null) {
             try {
                 FileTool.writeContentToFile(makeAneConfigInfo().toJSONString(),currentConfigFile);
                 Log.info("保存文件成功");
+
+                if (firstSave){
+                    lvRecentConfigFiles.addAndSelectItem(new RecentFilesListCellData(currentConfigFile));
+                }
             } catch (IOException e) {
                 e.printStackTrace();
                 Log.error("保存文件失败");
@@ -226,8 +235,7 @@ public class MainViewController implements Initializable {
         fc.setTitle("打开配置文件");
         File file = fc.showOpenDialog(getWindow());
         if (file != null) {
-            lvRecentConfigFiles.addItem(new RecentFilesListCellData(file));
-            syncUIStatusWithConfigFile(file);
+            lvRecentConfigFiles.addAndSelectItem(new RecentFilesListCellData(file));
         }
     }
 
@@ -246,9 +254,7 @@ public class MainViewController implements Initializable {
                 try {
                     FileTool.writeContentToFile(makeAneConfigInfo().toJSONString(),currentConfigFile);
 
-                    RecentFilesListCellData newItem = new RecentFilesListCellData(currentConfigFile);
-                    lvRecentConfigFiles.addItem(newItem);
-                    lvRecentConfigFiles.getSelectionModel().select(newItem);
+                    lvRecentConfigFiles.addAndSelectItem(new RecentFilesListCellData(currentConfigFile));
 
                     Log.info("另存文件成功");
                 } catch (IOException e) {

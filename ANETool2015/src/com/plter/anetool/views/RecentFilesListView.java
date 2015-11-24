@@ -43,24 +43,26 @@ public class RecentFilesListView extends ListView<RecentFilesListCellData> {
 
         int index = items.indexOf(data);
 
-        if (index != -1) {
+        if (index > 0) {
             items.remove(index);
+            items.add(0, data);
+        }else if (index==-1){
+            items.add(0, data);
         }
 
-        items.add(0, data);
         saveRecentFiles();
     }
 
     private void saveRecentFiles() {
         ObservableList<RecentFilesListCellData> items = getItems();
-        if (items.size()>0) {
+        if (items.size() > 0) {
             prefs.put("recentFiles", ArrayTool.join(items.stream().map(RecentFilesListCellData::getAbsolutePath).collect(Collectors.toList()), "\n"));
             try {
                 prefs.flush();
             } catch (BackingStoreException e) {
                 e.printStackTrace();
             }
-        }else {
+        } else {
             try {
                 prefs.clear();
             } catch (BackingStoreException e) {

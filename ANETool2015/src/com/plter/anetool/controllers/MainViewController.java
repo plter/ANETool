@@ -180,18 +180,11 @@ public class MainViewController implements Initializable {
 
         if (currentConfigFile != null) {
             try {
-                if (!currentConfigFile.exists()) {
-                    currentConfigFile.createNewFile();
-                }
-
-                FileOutputStream fos = new FileOutputStream(currentConfigFile);
-                fos.write(makeAneConfigInfo().toJSONString().getBytes(Config.DEFAULT_CHARSET));
-                fos.flush();
-                fos.close();
-
+                FileTool.writeContentToFile(makeAneConfigInfo().toJSONString(),currentConfigFile);
                 Log.info("保存文件成功");
             } catch (IOException e) {
                 e.printStackTrace();
+                Log.error("保存文件失败");
             }
         }
     }
@@ -235,6 +228,35 @@ public class MainViewController implements Initializable {
         if (file != null) {
             lvRecentConfigFiles.addItem(new RecentFilesListCellData(file));
             syncUIStatusWithConfigFile(file);
+        }
+    }
+
+    public void btnSaveNewConfigFileClickedHandler(ActionEvent actionEvent) {
+        if (currentConfigFile==null){
+            btnSaveConfigFileClickedHandler(null);
+        }else {
+            FileChooser fc = new FileChooser();
+            fc.setTitle("请选择配置文件保存地址");
+            fc.setInitialFileName("CopyOf"+currentConfigFile.getName());
+            File result = fc.showSaveDialog(getWindow());
+
+            if (result!=null){
+                currentConfigFile = result;
+
+                try {
+                    FileTool.writeContentToFile(makeAneConfigInfo().toJSONString(),currentConfigFile);
+
+                    RecentFilesListCellData newItem = new RecentFilesListCellData(currentConfigFile);
+                    lvRecentConfigFiles.addItem(newItem);
+                    lvRecentConfigFiles.getSelectionModel().select(newItem);
+
+                    Log.info("另存文件成功");
+                } catch (IOException e) {
+                    e.printStackTrace();
+
+                    Log.error("另存文件失败");
+                }
+            }
         }
     }
 }

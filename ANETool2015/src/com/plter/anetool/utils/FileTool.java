@@ -87,4 +87,23 @@ public class FileTool {
         return getFileContent(file, "UTF-8");
     }
 
+
+    public static void writeContentToFile(String content,String charset,File file) throws IOException {
+        FileOutputStream fos = new FileOutputStream(file);
+        fos.write(content.getBytes(charset));
+        fos.flush();
+        fos.close();
+    }
+
+
+    /**
+     * Write string data to file with charset utf-8
+     * @param content
+     * @param file
+     * @throws IOException
+     */
+    public static void writeContentToFile(String content,File file) throws IOException {
+        writeContentToFile(content,"UTF-8",file);
+    }
+
 }

@@ -9,6 +9,7 @@
     <HBox style="-fx-spacing: 5px;-fx-alignment: center-left">
         <Button text="打开" onAction="#btnOpenConfigFileClickedHandler"/>
         <Button text="保存" onAction="#btnSaveConfigFileClickedHandler"/>
+        <Button text="另存为" onAction="#btnSaveNewConfigFileClickedHandler"/>
         <Button text="捐助" onAction="#btnDonateClickHandler"/>
         <Button text="关于" onAction="#btnAboutClickHandler"/>
 
